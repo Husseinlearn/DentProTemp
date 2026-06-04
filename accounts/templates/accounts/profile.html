@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}الملف الشخصي - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #060b13 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    main {
+        background-color: #060b13 !important;
+    }
+    
+    header {
+        background-color: #060b13 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+    }
+    
+    form input, form select, form textarea {
+        background-color: #0d1527 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #fff !important;
+        border-radius: 16px !important;
+        padding: 10px 14px !important;
+        font-size: 0.875rem !important;
+        width: 100%;
+        transition: all 0.2s ease-in-out !important;
+    }
+    form input:focus, form select:focus, form textarea:focus {
+        border-color: #2dd4bf !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+    }
+    form label {
+        color: #cbd5e1 !important;
+        font-weight: 700 !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة للوحة التحكم
+    </a>
+</div>
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden relative p-8 shadow-2xl">
+        <div class="absolute top-0 start-0 w-full h-1 bg-gradient-to-l from-teal-400 to-indigo-500"></div>
+
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-3xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-black text-3xl border border-teal-500/10 shadow-inner select-none mx-auto mb-4">
+                {{ user_initials }}
+            </div>
+            <h2 class="text-2xl font-black text-white">إعدادات الملف الشخصي</h2>
+            <p class="text-xs text-slate-400 mt-2 font-bold">تحديث معلومات الحساب والملف الشخصي وتعديل كلمة المرور الخاصة بك.</p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/10 text-red-400 font-bold p-4 rounded-2xl border border-red-500/15 flex items-start gap-3 text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                <div>{{ form.non_field_errors }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Account details -->
+            <div class="space-y-5">
+                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-id-card text-teal-400 ml-1.5"></i> بيانات الحساب</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}">الاسم الأول والوسط *</label>
+                        {{ form.first_name }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.first_name.errors }}</div>
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}">اسم العائلة *</label>
+                        {{ form.last_name }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.last_name.errors }}</div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="{{ form.email.id_for_label }}">البريد الإلكتروني *</label>
+                        {{ form.email }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.email.errors }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile details -->
+            <div class="space-y-5 pt-4">
+                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-phone text-teal-400 ml-1.5"></i> بيانات الاتصال</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}">رقم الهاتف *</label>
+                        {{ form.phone }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.phone.errors }}</div>
+                    </div>
+                    <div>
+                        <label for="{{ form.gender.id_for_label }}">الجنس *</label>
+                        {{ form.gender }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.gender.errors }}</div>
+                    </div>
+                    <div>
+                        <label for="{{ form.birth_date.id_for_label }}">تاريخ الميلاد</label>
+                        {{ form.birth_date }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.birth_date.errors }}</div>
+                    </div>
+                    <div>
+                        <label for="{{ form.address.id_for_label }}">العنوان</label>
+                        {{ form.address }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.address.errors }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor profile (Read-only if applicable) -->
+            {% if doctor_profile %}
+            <div class="space-y-5 pt-4 bg-[#080d19]/40 border border-slate-800/60 p-5 rounded-2xl">
+                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-stethoscope text-teal-400 ml-1.5"></i> التفاصيل المهنية والمالية (للقراءة فقط)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-bold">
+                    <div>
+                        <span class="text-slate-400 block mb-1">التخصص الطبي</span>
+                        <span class="text-white text-sm">{{ doctor_profile.specialization|default:"طب الأسنان العام" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">رقم الترخيص</span>
+                        <span class="text-white text-sm">{{ doctor_profile.license_number }}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">نسبة المشاركة من الأرباح</span>
+                        <span class="text-teal-400 text-sm">{{ doctor_profile.revenue_share }}%</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Security credentials -->
+            <div class="space-y-5 pt-4">
+                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-lock text-teal-400 ml-1.5"></i> تغيير كلمة المرور</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="{{ form.password.id_for_label }}">كلمة المرور الجديدة</label>
+                        {{ form.password }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.password.errors }}</div>
+                    </div>
+                    <div>
+                        <label for="{{ form.password_confirm.id_for_label }}">تأكيد كلمة المرور الجديدة</label>
+                        {{ form.password_confirm }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.password_confirm.errors }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="mt-8 flex items-center justify-center gap-3 pt-6 border-t border-slate-800/40">
+                <a href="/"
+                    class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">إلغاء</a>
+                <button type="submit" class="btn bg-teal-400 text-slate-950 hover:bg-teal-300 px-6 py-2.5 rounded-xl font-bold border-none transition-all shadow-lg shadow-teal-500/10">
+                    <i class="fa-solid fa-check ml-1.5"></i> حفظ التغييرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

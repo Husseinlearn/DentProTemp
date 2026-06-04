@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}نتائج البحث - DentPro{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="/"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة للوحة التحكم
+    </a>
+</div>
+
+<div class="flex flex-col gap-8">
+    <!-- Header Summary Card -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 start-0 w-full h-1 bg-gradient-to-l from-teal-400 to-indigo-500"></div>
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 shadow-inner select-none">
+                <i class="fa-solid fa-magnifying-glass text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-white">نتائج البحث</h2>
+                <p class="text-xs text-slate-400 mt-1 font-bold">تم العثور على نتائج للبحث عن: <span class="text-teal-400">"{{ search_query }}"</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patients Section -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl">
+        <h3 class="font-bold text-white text-base mb-6 flex items-center gap-2"><i class="fa-solid fa-users text-teal-400"></i> المرضى المطابقين</h3>
+        
+        {% if patients %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/60 text-slate-400 text-xs uppercase border-b border-slate-800/40 font-bold">
+                        <th class="p-4 text-start font-black">الاسم الكامل</th>
+                        <th class="p-4 text-center font-black">رقم الهاتف</th>
+                        <th class="p-4 text-center font-black">البريد الإلكتروني</th>
+                        <th class="p-4 text-center font-black">العنوان</th>
+                        <th class="p-4 text-end font-black">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for patient in patients %}
+                    <tr class="hover:bg-[#080d19]/30 transition-all font-bold">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-extrabold text-xs shadow-inner">
+                                    {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'patients_web:patient-detail' patient.pk %}" class="text-white hover:text-teal-400 transition-all text-xs block">
+                                        {{ patient.first_name }} {{ patient.last_name }}
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">{{ patient.phone }}</td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">{{ patient.email|default:"-" }}</td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">{{ patient.address|default:"-" }}</td>
+                        <td class="p-4 text-end align-middle">
+                            <div class="flex justify-end gap-2">
+                                <a href="{% url 'patients_web:patient-detail' patient.pk %}" class="btn bg-teal-400/10 hover:bg-teal-400 hover:text-slate-900 text-teal-400 border border-teal-500/10 py-1 px-3 rounded-lg text-xs font-bold transition-all">
+                                    عرض الملف
+                                </a>
+                                <a href="{% url 'patients_web:patient-update' patient.pk %}" class="btn bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/40 py-1 px-3 rounded-lg text-xs font-bold transition-all">
+                                    تعديل
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-10">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 text-slate-500 mb-3">
+                <i class="fa-solid fa-user-slash text-lg"></i>
+            </div>
+            <p class="text-slate-400 text-sm font-bold">لا يوجد مرضى مطابقين لمدخلات البحث.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Appointments Section -->
+    {% if appointments %}
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl">
+        <h3 class="font-bold text-white text-base mb-6 flex items-center gap-2"><i class="fa-solid fa-calendar-check text-teal-400"></i> المواعيد</h3>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/60 text-slate-400 text-xs uppercase border-b border-slate-800/40 font-bold">
+                        <th class="p-4 text-start font-black">المريض</th>
+                        <th class="p-4 text-center font-black">الطبيب المعالج</th>
+                        <th class="p-4 text-center font-black">التاريخ</th>
+                        <th class="p-4 text-center font-black">الوقت</th>
+                        <th class="p-4 text-center font-black">سبب الزيارة</th>
+                        <th class="p-4 text-center font-black">الحالة</th>
+                        <th class="p-4 text-end font-black">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for appt in appointments %}
+                    <tr class="hover:bg-[#080d19]/30 transition-all font-bold">
+                        <td class="p-4">
+                            <span class="text-white text-xs">{{ appt.patient.first_name }} {{ appt.patient.last_name }}</span>
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 text-xs">
+                            د. {{ appt.doctor.user.get_full_name|default:appt.doctor.user.username }}
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">{{ appt.date|date:"Y/m/d" }}</td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">{{ appt.time|time:"H:i" }}</td>
+                        <td class="p-4 text-center align-middle text-slate-400 text-xs max-w-xs truncate">{{ appt.reason|default:"-" }}</td>
+                        <td class="p-4 text-center align-middle">
+                            <span class="inline-flex px-2 py-1 rounded-lg text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/10">
+                                {{ appt.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-end align-middle">
+                            <a href="{% url 'appointments_web:appointment-detail' appt.pk %}" class="btn bg-teal-400/10 hover:bg-teal-400 hover:text-slate-900 text-teal-400 border border-teal-500/10 py-1 px-3 rounded-lg text-xs font-bold transition-all">
+                                عرض التفاصيل
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

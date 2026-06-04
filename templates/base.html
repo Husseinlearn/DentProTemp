@@ -12,6 +12,13 @@
     <!-- Tailwind CSS (Local) -->
     <script src="{% static 'js/tailwind.js' %}"></script>
     <script>
+        // Check local storage or system preference
+        if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        
         tailwind.config = {
             theme: {
                 extend: {
@@ -55,23 +62,50 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
 
+        :root {
+            --bg-color: #0b1824;
+            --main-bg: #060b13;
+            --sidebar-bg: #07111b;
+            --card-bg: #0d1527;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-white: #ffffff;
+            --gradient-radial: radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.15) 0px, transparent 50%),
+                               radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.2) 0px, transparent 50%);
+            --shadow-primary: rgba(45, 149, 150, 0.35);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --main-bg: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-white: #0f172a;
+            --gradient-radial: radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.05) 0px, transparent 50%),
+                               radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.05) 0px, transparent 50%);
+            --shadow-primary: rgba(45, 149, 150, 0.15);
+        }
+
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #0b1824 !important;
-            background-image: 
-                radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.15) 0px, transparent 50%),
-                radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.2) 0px, transparent 50%) !important;
+            background-color: var(--bg-color) !important;
+            background-image: var(--gradient-radial) !important;
+            color: var(--text-main) !important;
         }
 
         .sidebar {
-            background: #07111b;
-            color: #cbd5e1;
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--sidebar-bg);
+            color: var(--text-muted);
+            border-left: 1px solid var(--border-color);
         }
 
         .sidebar-link {
             transition: all 0.2s ease-in-out;
-            color: #cbd5e1;
+            color: var(--text-muted);
             border-radius: 50px;
         }
 
@@ -85,7 +119,56 @@
             background: #2D9596 !important;
             color: #fff !important;
             font-weight: 700;
-            box-shadow: 0 4px 15px rgba(45, 149, 150, 0.35);
+            box-shadow: 0 4px 15px var(--shadow-primary);
+        }
+
+        /* Light Theme Overrides for hardcoded Tailwind backgrounds and borders */
+        [data-theme="light"] .bg-\[\#060b13\] {
+            background-color: var(--main-bg) !important;
+        }
+        [data-theme="light"] .bg-\[\#0d1527\] {
+            background-color: var(--card-bg) !important;
+        }
+        [data-theme="light"] .bg-\[\#0d1527\]\/50 {
+            background-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        [data-theme="light"] .bg-\[\#080d19\]\/60 {
+            background-color: rgba(241, 245, 249, 0.6) !important;
+        }
+        [data-theme="light"] .bg-\[\#080d19\]\/40 {
+            background-color: rgba(241, 245, 249, 0.4) !important;
+        }
+        [data-theme="light"] .text-slate-200,
+        [data-theme="light"] .text-slate-300,
+        [data-theme="light"] .text-white {
+            color: var(--text-main) !important;
+        }
+        [data-theme="light"] .text-slate-400 {
+            color: var(--text-muted) !important;
+        }
+        [data-theme="light"] .border-slate-800,
+        [data-theme="light"] .border-slate-800\/80,
+        [data-theme="light"] .border-slate-800\/60,
+        [data-theme="light"] .border-slate-800\/50,
+        [data-theme="light"] .border-slate-800\/40,
+        [data-theme="light"] .border-slate-900\/60,
+        [data-theme="light"] .border-slate-900 {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] header input {
+            background-color: #f1f5f9 !important;
+            border-color: rgba(0, 0, 0, 0.08) !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] form input,
+        [data-theme="light"] form select,
+        [data-theme="light"] form textarea {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        [data-theme="light"] form label {
+            color: #1e293b !important;
         }
 
         /* Bootstrap overrides for modern feel */
@@ -238,22 +321,28 @@
                 <button class="md:hidden text-slate-400 hover:text-slate-200 focus:outline-none">
                     <i class="fa-solid fa-bars text-xl"></i>
                 </button>
-                <div class="hidden md:flex relative ms-4">
+                <form action="{% url 'core_web:search' %}" method="get" class="hidden md:flex relative ms-4">
                     <i class="fa-solid fa-search absolute start-3 top-1/2 transform -translate-y-1/2 text-slate-500"></i>
-                    <input type="text"
+                    <input type="text" name="q" value="{{ search_query|default:'' }}"
                         class="ps-10 pe-4 py-2 bg-[#0d1527] border border-slate-800/80 text-white placeholder-slate-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64 transition-all"
                         placeholder="البحث في كل مكان...">
-                </div>
+                </form>
             </div>
             <div class="flex items-center gap-4">
-                <button class="text-slate-400 hover:text-teal-400 transition-colors relative">
-                    <i class="fa-regular fa-bell text-xl"></i>
-                    <span class="absolute top-0 end-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="text-slate-400 hover:text-teal-400 transition-colors relative p-1.5 flex items-center justify-center" aria-label="تبديل المظهر">
+                    <i id="theme-toggle-dark-icon" class="fa-solid fa-moon text-xl hidden"></i>
+                    <i id="theme-toggle-light-icon" class="fa-solid fa-sun text-xl hidden"></i>
                 </button>
-                <div
-                    class="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-black cursor-pointer shadow-sm hover:bg-teal-500/20 transition-all select-none">
-                    أ
-                </div>
+                <!-- Notifications Button -->
+                <button class="text-slate-400 hover:text-teal-400 transition-colors relative p-1.5 flex items-center justify-center">
+                    <i class="fa-solid fa-bell text-xl"></i>
+                    <span class="absolute top-1 end-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#060b13]"></span>
+                </button>
+                <a href="{% url 'accounts_web:profile' %}"
+                    class="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-black cursor-pointer shadow-sm hover:bg-teal-500/20 transition-all select-none no-underline">
+                    {{ user_initials }}
+                </a>
             </div>
         </header>
 
@@ -304,6 +393,33 @@
             }
         }
     </style>
+    <!-- Theme Toggle Persistence and Interactive Code -->
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Toggle Icons Visibility
+        if (document.documentElement.getAttribute('data-theme') === 'light') {
+            darkIcon.classList.remove('hidden');
+        } else {
+            lightIcon.classList.remove('hidden');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('color-theme', 'light');
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 

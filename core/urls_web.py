@@ -5,4 +5,5 @@ app_name = 'core_web'
 
 urlpatterns = [
     path('', views_web.DashboardView.as_view(), name='dashboard'),
+    path('search/', views_web.SearchView.as_view(), name='search'),
 ]

@@ -9,4 +9,5 @@ urlpatterns = [
     path('doctors/<uuid:pk>/delete/', views_web.DoctorDeleteView.as_view(), name='doctor-delete'),
     path('login/', views_web.CustomLoginView.as_view(), name='login'),
     path('logout/', views_web.CustomLogoutView.as_view(), name='logout'),
+    path('profile/', views_web.ProfileView.as_view(), name='profile'),
 ]

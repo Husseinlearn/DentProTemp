@@ -1,5 +1,5 @@
 import datetime
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Count, Q
 from patients.models import Patient
@@ -288,3 +288,37 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     'notes': 'يؤخذ لتخفيف التورم والألم عند الضرورة فقط'
                 }
             ]
+
+
+class SearchView(LoginRequiredMixin, ListView):
+    template_name = 'core/search_results.html'
+    context_object_name = 'patients'
+    
+    def get_queryset(self):
+        query = self.request.GET.get('q', '').strip()
+        if not query:
+            return Patient.objects.none()
+        
+        return Patient.objects.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(phone__icontains=query) |
+            Q(email__icontains=query) |
+            Q(address__icontains=query)
+        ).filter(is_archived=False)
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.get('q', '').strip()
+        context['search_query'] = query
+        
+        matched_patients = self.get_queryset()
+        if matched_patients.exists():
+            context['appointments'] = Appointment.objects.filter(
+                patient__in=matched_patients
+            ).select_related('patient', 'doctor__user').order_by('-date', '-time')
+        else:
+            context['appointments'] = Appointment.objects.none()
+            
+        return context
+
