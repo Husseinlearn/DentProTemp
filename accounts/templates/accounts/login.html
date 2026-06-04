@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - DentPro</title>
+    <!-- Bootstrap 5 RTL CSS (Local) -->
+    <link href="{% static 'css/bootstrap.rtl.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Tailwind CSS (Local) -->
+    <script src="{% static 'js/tailwind.js' %}"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D9596',      // Main Dental Teal
+                        secondary: '#244F76',    // Deep Navy
+                        accent: '#9AD0C2',       // Soft Mint Accent
+                        cream: '#EBF2D5',        // Accent Pale Cream
+                        surface: '#0d1527',
+                        teal: {
+                            50: '#f4fbf9',
+                            100: '#e6f7f3',
+                            200: '#c2edd8',
+                            300: '#c2ede5',
+                            400: '#9AD0C2', // Soft Mint
+                            500: '#2D9596', // Primary Teal
+                            600: '#247a7b',
+                            700: '#1e6263',
+                            800: '#1a4f50',
+                            900: '#244F76', // Deep Navy
+                            950: '#0b1824',
+                        },
+                        slate: {
+                            50: '#f4f6f8',
+                            100: '#e8edf1',
+                            200: '#cbd7e2',
+                            300: '#9fb3c6',
+                            400: '#6c8aa6',
+                            500: '#244F76', // Deep Navy
+                            600: '#1b3b59',
+                            700: '#142c43',
+                            800: '#0e1e2d',
+                            900: '#0a141f',
+                            950: '#050a0f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b1824;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.2) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(13, 21, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .glow-input:focus {
+            box-shadow: 0 0 15px rgba(0, 194, 194, 0.25);
+            border-color: #00c2c2 !important;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo Section -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-teal-400/10 border border-teal-400/20 shadow-lg shadow-teal-500/10 mb-4 overflow-hidden animate-pulse">
+                <img src="{% static 'logoSystem.png' %}" alt="DentPro Logo" class="w-full h-full object-cover">
+            </div>
+            <h1 class="text-3xl font-black text-white tracking-tight">DentPro</h1>
+            <p class="text-xs font-bold text-slate-400 mt-2">نظام الإدارة الذكي المتكامل للعيادات الطبية</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="glass-card rounded-3xl p-8 max-w-sm mx-auto">
+            <h2 class="text-xl font-bold text-white mb-6 text-center">تسجيل الدخول للمنصة</h2>
+
+            {% if form.errors %}
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 mb-6 text-xs font-bold flex gap-3">
+                <i class="fa-solid fa-circle-exclamation text-base mt-0.5"></i>
+                <div>البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.</div>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'accounts_web:login' %}" class="space-y-5">
+                {% csrf_token %}
+                
+                <!-- Email Input -->
+                <div>
+                    <label for="username" class="block text-xs font-bold text-slate-400 mb-2">البريد الإلكتروني</label>
+                    <div class="relative">
+                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" name="username" id="username" required
+                            class="glow-input w-full pr-12 pl-4 py-3 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                            placeholder="name@dentpro.com">
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="password" class="block text-xs font-bold text-slate-400">كلمة المرور</label>
+                        <a href="#" class="text-[11px] font-bold text-teal-400 hover:text-teal-300 transition-colors">نسيت كلمة المرور؟</a>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" name="password" id="password" required
+                            class="glow-input w-full pr-12 pl-4 py-3 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                            placeholder="••••••••">
+                    </div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center gap-2 py-1 select-none">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-slate-800 bg-[#080d19] text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900">
+                    <label for="remember" class="text-xs font-bold text-slate-400 cursor-pointer">تذكرني على هذا الجهاز</label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                    class="w-full bg-teal-400 hover:bg-teal-300 text-slate-950 font-extrabold py-3 px-6 rounded-2xl shadow-lg shadow-teal-500/10 hover:shadow-teal-500/20 transform hover:-translate-y-0.5 transition-all text-sm mt-4 flex items-center justify-center gap-2 border-none">
+                    <span>تسجيل الدخول</span> <i class="fa-solid fa-arrow-left text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-[10px] font-bold text-slate-500 mt-12">
+            DentPro © 2026. جميع الحقوق محفوظة لعيادتك الطبية.
+        </p>
+    </div>
+</body>
+
+</html>

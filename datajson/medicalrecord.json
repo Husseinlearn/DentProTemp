@@ -1,0 +1,66 @@
+[
+    {
+        "patient": "3a5e5e99-a9ec-4101-88c2-ac9de873fb89"
+    },
+    {
+        "name": "Amoxicillin 500mg",
+        "description": "مضاد حيوي واسع الطيف",
+        "default_dose_unit": "قرص",
+        "is_active": true
+    },
+    {
+        "clinical_exam": 3,
+        "medication": 1,
+        "times_per_day": 3,
+        "dose_unit": "قرص",
+        "number_of_days": 5,
+        "notes": "بعد الأكل",
+        "prescribed_by": "7e65958c-23ec-462f-8ee3-6c8aa5357812"
+    },
+    {
+        "name": "في حال التهاب اللثة",
+        "disease": 1,
+        "description": "حزمة أدوية قياسية لعلاج التهاب اللثة",
+        "is_active": true,
+        "items": [
+            {
+                "medication": 1,
+                "times_per_day": 2,
+                "dose_unit": "غسول 10ml",
+                "number_of_days": 7,
+                "notes": "بعد تنظيف الأسنان"
+            },
+            {
+                "medication": 2,
+                "times_per_day": 3,
+                "dose_unit": "قرص",
+                "number_of_days": 5,
+                "notes": "بعد الوجبات"
+            },
+            {
+                "medication": 3,
+                "times_per_day": 2,
+                "dose_unit": "قرص",
+                "number_of_days": 3,
+                "notes": "عند الحاجة للألم"
+            }
+        ]
+    },
+    {
+        "clinical_exam_id": 3,
+        "mode": "append"
+    },
+    {
+        "clinical_exam": 6,
+        "general_notes": "يرجى شرب الماء بكثرة وتجنب القيادة عند النعاس.",
+        "items": [
+            {
+                "medication": 5,
+                "times_per_day": 3,
+                "dose_unit": "حبة",
+                "number_of_days": 7,
+                "notes": "عند الوجع"
+            }
+        ]
+    }
+]

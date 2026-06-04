@@ -1,0 +1,176 @@
+{% extends 'base.html' %} {% block title %}قائمة المرضى - DentPro{% endblock %}
+{% block extra_css %}
+<style>
+  /* Dark Theme Overrides */
+  body {
+    background-color: #060b13 !important;
+    color: #e2e8f0 !important;
+  }
+
+  main {
+    background-color: #060b13 !important;
+  }
+
+  header {
+    background-color: #060b13 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: none !important;
+  }
+
+  header span.text-slate-500,
+  header i.text-slate-400 {
+    color: #94a3b8 !important;
+  }
+
+  header input {
+    background-color: #0d1527 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="flex justify-between items-center mb-6">
+  <div>
+    <h2 class="text-2xl font-black text-white tracking-tight">المرضى</h2>
+    <p class="text-xs font-bold text-slate-400 mt-1.5">
+      إدارة مرضى عيادتك وتفاصيل ملفاتهم الطبية
+    </p>
+  </div>
+  <a
+    href="{% url 'patients_web:patient-create' %}"
+    class="btn bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold border-none py-2 px-5 rounded-xl shadow-lg shadow-teal-500/10 flex items-center gap-2 transition-all"
+  >
+    <i class="fa-solid fa-plus text-xs"></i> إضافة مريض جديد
+  </a>
+</div>
+
+<div
+  class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden shadow-2xl"
+>
+  <div
+    class="p-5 border-b border-slate-800/40 flex justify-between items-center bg-[#080d19]/40"
+  >
+    <h3 class="font-bold text-white text-sm">دليل المرضى</h3>
+    <span
+      class="bg-teal-500/10 text-teal-400 border border-teal-500/10 text-xs font-bold px-3 py-1.5 rounded-xl"
+      >{{ patients|length }} مريض</span
+    >
+  </div>
+
+  {% if patients %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-start border-collapse">
+      <thead>
+        <tr
+          class="bg-[#080d19]/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800/40 font-bold"
+        >
+          <th class="p-4 border-b border-slate-800/40 text-start font-black">
+            معلومات المريض
+          </th>
+          <th class="p-4 border-b border-slate-800/40 text-start font-black">
+            الاتصال
+          </th>
+          <th class="p-4 border-b border-slate-800/40 text-start font-black">
+            البيانات الديموغرافية
+          </th>
+          <th class="p-4 border-b border-slate-800/40 text-end font-black">
+            الإجراءات
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800/40 text-sm">
+        {% for patient in patients %}
+        <tr class="hover:bg-[#080d19]/30 transition-all group">
+          <td class="p-4">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-extrabold shadow-inner select-none"
+              >
+                {{ patient.first_name|make_list|first }}{{ patient.last_name|make_list|first }}
+              </div>
+              <div>
+                <a
+                  href="{% url 'patients_web:patient-detail' patient.pk %}"
+                  class="font-bold text-white hover:text-teal-300 transition-colors"
+                  >{{ patient.full_name }}</a
+                >
+                <div class="text-[10px] font-bold text-slate-500 mt-1">
+                  أُضيف في {{ patient.created_at|date:"Y/m/d" }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="p-4 align-middle">
+            <div class="flex flex-col gap-1.5 font-bold">
+              <span class="text-slate-300 text-xs flex items-center gap-2"
+                ><i class="fa-solid fa-phone text-slate-500 text-xs w-3"></i> {{ patient.phone }}</span
+              >
+              {% if patient.email %}
+              <span class="text-slate-400 text-xs flex items-center gap-2"
+                ><i class="fa-solid fa-envelope text-slate-500 text-xs w-3"></i>
+                {{ patient.email }}</span
+              >
+              {% endif %}
+            </div>
+          </td>
+          <td class="p-4 align-middle">
+            <div class="flex gap-2 mb-1.5">
+              <span
+                class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#080d19]/60 border border-slate-800 text-slate-300"
+              >
+                {{ patient.get_gender_display|default:"غير محدد" }}
+              </span>
+            </div>
+            <div class="text-xs text-slate-500 font-bold">
+              تاريخ الميلاد:
+              <span class="font-bold text-slate-300"
+                >{{ patient.date_of_birth|default:"-" }}</span
+              >
+            </div>
+          </td>
+          <td class="p-4 align-middle text-end">
+            <div
+              class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <a href="{% url 'patients_web:patient-update' patient.pk %}"
+                class="w-8 h-8 rounded-xl bg-[#080d19] border border-slate-800 flex items-center justify-center text-teal-400 hover:text-slate-950 hover:bg-teal-400 hover:border-teal-400 transition-all shadow-md shadow-slate-950/20"
+                title="تعديل المريض"
+              >
+                <i class="fa-solid fa-pen text-xs"></i>
+              </a>
+              <a href="{% url 'patients_web:patient-delete' patient.pk %}"
+                class="w-8 h-8 rounded-xl bg-[#080d19] border border-slate-800 flex items-center justify-center text-red-400 hover:text-white hover:bg-red-500 hover:border-red-500 transition-all shadow-md shadow-slate-950/20"
+                title="حذف المريض"
+              >
+                <i class="fa-solid fa-trash text-xs"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-12 px-4 bg-[#080d19]/20">
+    <div
+      class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-400 mb-4 border border-teal-500/10 shadow-inner"
+    >
+      <i class="fa-solid fa-users text-2xl"></i>
+    </div>
+    <h3 class="text-lg font-bold text-white mb-1">لم يتم العثور على مرضى</h3>
+    <p
+      class="text-xs text-slate-400 mb-6 max-w-sm mx-auto font-bold leading-relaxed"
+    >
+      ابدأ بإنشاء سجل مريض جديد لبناء قاعدة بيانات عيادتك الطبية.
+    </p>
+    <a
+      href="{% url 'patients_web:patient-create' %}"
+      class="btn bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold border-none py-2 px-6 rounded-xl shadow-lg shadow-teal-500/10"
+    >
+      إضافة المريض الأول
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

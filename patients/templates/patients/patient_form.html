@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if object %}تعديل بيانات المريض{% else %}إضافة مريض جديد{% endif %} - DentPro
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dark Theme Overrides */
+    body {
+        background-color: #060b13 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    main {
+        background-color: #060b13 !important;
+    }
+    
+    header {
+        background-color: #060b13 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+    }
+    
+    /* Form inputs custom premium styles */
+    form input, form select, form textarea {
+        background-color: #060b13 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #fff !important;
+        border-radius: 16px !important;
+        padding: 10px 14px !important;
+        font-size: 0.875rem !important;
+        width: 100%;
+        transition: all 0.2s ease-in-out !important;
+    }
+    form input:focus, form select:focus, form textarea:focus {
+        border-color: #2dd4bf !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+    }
+    form label {
+        color: #cbd5e1 !important;
+        font-weight: 700 !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% if object %}{% url 'patients_web:patient-detail' object.pk %}{% else %}{% url 'patients_web:patient-list' %}{% endif %}"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة
+    </a>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden p-8 relative shadow-2xl">
+        <div class="absolute top-0 start-0 w-full h-1 bg-gradient-to-l from-teal-400 to-indigo-500"></div>
+        <h2 class="text-2xl font-black text-white mb-6">{% if object %}تعديل ملف المريض{% else %}إضافة مريض جديد{% endif %}</h2>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/10 text-red-400 font-bold p-4 rounded-2xl border border-red-500/15 flex items-start gap-3 text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                <div>{{ form.non_field_errors }}</div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Personal Information Section -->
+                <div class="md:col-span-2">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-800/40 pb-2">البيانات الشخصية</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="{{ form.first_name.id_for_label }}">الاسم الأول *</label>
+                            {{ form.first_name }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.first_name.errors }}</div>
+                        </div>
+                        <div>
+                            <label for="{{ form.last_name.id_for_label }}">اسم العائلة *</label>
+                            {{ form.last_name }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.last_name.errors }}</div>
+                        </div>
+                        <div>
+                            <label for="{{ form.date_of_birth.id_for_label }}">تاريخ الميلاد</label>
+                            {{ form.date_of_birth }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.date_of_birth.errors }}</div>
+                        </div>
+                        <div>
+                            <label for="{{ form.gender.id_for_label }}">الجنس</label>
+                            {{ form.gender }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.gender.errors }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Details Section -->
+                <div class="md:col-span-2 border-t border-slate-800/40 pt-6">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-800/40 pb-2">بيانات الاتصال</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="{{ form.phone.id_for_label }}">رقم الهاتف *</label>
+                            {{ form.phone }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.phone.errors }}</div>
+                        </div>
+                        <div>
+                            <label for="{{ form.email.id_for_label }}">البريد الإلكتروني</label>
+                            {{ form.email }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.email.errors }}</div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="{{ form.address.id_for_label }}">العنوان الفعلي</label>
+                            {{ form.address }}
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.address.errors }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical Overview Section -->
+                <div class="md:col-span-2 border-t border-slate-800/40 pt-6">
+                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-800/40 pb-2">الملف الطبي والتشخيصي</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-[#080d19]/40 p-5 rounded-2xl border border-slate-800/60">
+                        <div>
+                            <label for="{{ form.diseases.id_for_label }}" class="flex items-center gap-2">
+                                الأمراض المزمنة
+                                <span class="bg-teal-500/10 text-teal-400 text-[10px] px-2 py-0.5 rounded-lg border border-teal-500/10">تحديد متعدد</span>
+                            </label>
+                            {{ form.diseases }}
+                            <div class="text-slate-500 text-[11px] mt-2 font-bold"><i class="fa-solid fa-info-circle ml-1"></i>اضغط مع الاستمرار على Ctrl/Cmd لتحديد أكثر من خيار.</div>
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.diseases.errors }}</div>
+                        </div>
+                        <div>
+                            <label for="{{ form.allergies.id_for_label }}" class="flex items-center gap-2">
+                                الحساسية المعروفة
+                                <span class="bg-teal-500/10 text-teal-400 text-[10px] px-2 py-0.5 rounded-lg border border-teal-500/10">تحديد متعدد</span>
+                            </label>
+                            {{ form.allergies }}
+                            <div class="text-slate-500 text-[11px] mt-2 font-bold"><i class="fa-solid fa-info-circle ml-1"></i>اضغط مع الاستمرار على Ctrl/Cmd لتحديد أكثر من خيار.</div>
+                            <div class="text-red-400 text-xs mt-1 font-bold">{{ form.allergies.errors }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="mt-8 flex items-center justify-end gap-3 pt-6 border-t border-slate-800/40">
+                <a href="{% if object %}{% url 'patients_web:patient-detail' object.pk %}{% else %}{% url 'patients_web:patient-list' %}{% endif %}"
+                    class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">إلغاء</a>
+                <button type="submit" class="btn bg-teal-400 text-slate-950 hover:bg-teal-300 px-6 py-2.5 rounded-xl font-bold border-none transition-all shadow-lg shadow-teal-500/10">
+                    {% if object %}حفظ التغييرات{% else %}إنشاء ملف المريض{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

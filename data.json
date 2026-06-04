@@ -1,0 +1,110 @@
+[
+    {
+    "first_name": "Ali",
+    "last_name": "Ahmed",
+    "date_of_birth": "1995-07-01",
+    "gender": "male",
+    "phone": "+967771234567",
+    "email": "ali@example.com",
+    "address": "Sanaa, Yemen"
+},
+{
+    "username": "reception_ali",
+    "email": "ali@clinic.com",
+    "user_type": "receptionist",
+    "password": "#",
+    "password2": "#",
+    "profile": {
+        "phone": "777111222",
+        "gender": "male",
+        "birth_date": "1992-05-01",
+        "address": "صنعاء، التحرير"
+    }
+},
+{
+    "username": "doctor_ali",
+    "email": "ali@gmail.com",
+    "user_type": "doctor",
+    "password": "#",
+    "password2": "#",
+    "profile": {
+        "phone": "+967771234567",
+        "gender":"male",
+        "birth_date": "1995-07-01",
+        "address": "Sanaa, Yemen"
+    }
+},
+{
+    "first_name": "ameer ahmed abdo",
+    "last_name": "ali",
+    "date_of_birth": "1990-08-15",
+    "gender": "ذكر",
+    "phone": "778894444",
+    "email": "ameer@example.com",
+    "address": "Sanaa, Ibb"
+},
+{
+    "username": "dr_morad",
+    "email": "morad@example.com",
+    "first_name":"morad",
+    "last_name":"ali",
+    "user_type": "doctor",
+    "password": "Secure123",
+    "password2": "Secure123",
+    "profile": {
+    "phone": "778888888",
+    "gender": "female",
+    "birth_date": "1982-02-02",
+    "address": "المنصورة، عدن"
+    },
+    "doctor_profile": {
+    "specialization": "طب الأسنان التجميلي",
+    "license_number": "DOC-2003-002",
+    "revenue_share": 28.0
+    }
+},
+{
+    "_comment":"الطريقة الاولى ",
+    "first_name": "عز الدين محمد",
+    "last_name": "الحميري",
+    "date_of_birth": "12/11/1999",
+    "gender": "male",
+    "phone": "735987654",
+    "email": "nour@example.com",
+    "address": "عدن",
+    "diseases": [
+        1,
+        {
+            "name": "ربو"
+        },
+        "حساسية الأنف"
+    ],
+    "allergies": [
+        {
+            "id": 1
+        },
+        "Ibuprofen",
+        {
+            "name": "Lidocaine"
+        }
+    ]
+},
+{
+    "_comment": "الطريقة الثانية  ",
+    "first_name": "حسين علي",
+    "last_name": "عبده السباعي",
+    "date_of_birth": "2000-05-12",
+    "gender": "ذكر",
+    "phone": "733123456",
+    "email": "hussein@example.com",
+    "address": "صنعاء",
+    "diseases": [
+        "سكري",
+        "ضغط"
+    ],
+    "allergies": [
+        "Penicillin",
+        "Aspirin"
+    ]
+}
+]

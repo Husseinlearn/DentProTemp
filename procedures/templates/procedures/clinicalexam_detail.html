@@ -1,0 +1,868 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل الفحص السريري والمخطط السني - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dark Theme Overrides */
+    body {
+        background-color: #060b13 !important;
+        color: #c6999f !important;
+    }
+    
+    main {
+        background-color: #060b13 !important;
+    }
+    
+    header {
+        background-color: #060b13 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+    }
+    
+    header span.text-slate-500, 
+    header i.text-slate-400 {
+        color: #94a3b8 !important;
+    }
+    
+    header input {
+        background-color: #0d1527 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+        color: #fff !important;
+    }
+
+    /* SVG Dental Chart Custom Styles */
+    .tooth-svg {
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tooth-svg:hover {
+        transform: translateY(-4px) scale(1.08);
+        filter: drop-shadow(0 8px 12px rgba(45, 212, 191, 0.25));
+    }
+    .tooth-shape {
+        cursor: pointer;
+    }
+    
+    /* Condition State Classes */
+    .state-healthy {
+        fill: #0d1527 !important;
+        stroke: #1e293b !important;
+    }
+    .state-healthy-text {
+        fill: #64748b !important;
+    }
+
+    .state-selected {
+        fill: rgba(45, 212, 191, 0.2) !important;
+        stroke: #2dd4bf !important;
+        stroke-width: 2.5px !important;
+    }
+    .state-selected-text {
+        fill: #2dd4bf !important;
+        font-weight: 900 !important;
+    }
+
+    .state-caries {
+        fill: rgba(239, 68, 68, 0.15) !important;
+        stroke: #ef4444 !important;
+        stroke-width: 2px !important;
+    }
+    .state-caries-text {
+        fill: #f87171 !important;
+        font-weight: 900 !important;
+    }
+
+    .state-filling {
+        fill: rgba(20, 184, 166, 0.15) !important;
+        stroke: #14b8a6 !important;
+        stroke-width: 2px !important;
+    }
+    .state-filling-text {
+        fill: #2dd4bf !important;
+        font-weight: 900 !important;
+    }
+
+    .state-crown {
+        fill: rgba(245, 158, 11, 0.15) !important;
+        stroke: #f59e0b !important;
+        stroke-width: 2px !important;
+    }
+    .state-crown-text {
+        fill: #fbbf24 !important;
+        font-weight: 900 !important;
+    }
+
+    .state-extracted {
+        fill: rgba(71, 85, 105, 0.2) !important;
+        stroke: #64748b !important;
+        stroke-width: 2px !important;
+        stroke-dasharray: 2, 2 !important;
+    }
+    .state-extracted-text {
+        fill: #94a3b8 !important;
+        text-decoration: line-through !important;
+    }
+
+    .state-implant {
+        fill: rgba(14, 165, 233, 0.15) !important;
+        stroke: #0ea5e9 !important;
+        stroke-width: 2px !important;
+    }
+    .state-implant-text {
+        fill: #38bdf8 !important;
+        font-weight: 900 !important;
+    }
+
+    .state-rootcanal {
+        fill: rgba(139, 92, 246, 0.15) !important;
+        stroke: #8b5cf6 !important;
+        stroke-width: 2px !important;
+    }
+    .state-rootcanal-text {
+        fill: #a78bfa !important;
+        font-weight: 900 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <a href="{% url 'procedures_web:exam-list' %}"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة لقائمة الفحوصات
+    </a>
+    <div class="flex gap-3">
+        <a href="{% url 'procedures_web:exam-update' exam.pk %}"
+            class="btn bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold border-none py-1.5 px-4 rounded-xl text-sm transition-all"><i class="fa-solid fa-pen ml-1.5 text-xs"></i> تعديل الفحص</a>
+        <a href="{% url 'procedures_web:exam-delete' exam.pk %}"
+            class="btn bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/15 py-1.5 px-4 rounded-xl text-sm transition-all"><i class="fa-solid fa-trash ml-1.5 text-xs"></i> حذف الفحص</a>
+    </div>
+</div>
+
+<!-- Header Detail Panel -->
+<div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden mb-6 relative shadow-2xl">
+    <div class="absolute top-0 start-0 w-2 h-full bg-teal-400"></div>
+    <div class="p-6 ps-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-white mb-1">تفاصيل الفحص السريري والمخطط السني</h2>
+            <p class="text-xs text-slate-400 flex items-center gap-2 font-bold mt-1.5">
+                <i class="fa-regular fa-calendar-check mt-0.5"></i> أُجري الفحص يوم {{ exam.created_at|date:"l, Y/m/d" }}
+            </p>
+        </div>
+        <div class="px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/10 flex justify-center items-center font-bold text-xl">
+                <i class="fa-solid fa-user-doctor text-sm"></i></div>
+            <div>
+                <div class="text-[10px] uppercase font-black text-slate-400 tracking-wider">الفحص بواسطة</div>
+                <div class="font-bold text-slate-200 leading-tight mt-1">د. {{ exam.doctor.user.last_name|default:exam.doctor.user.username }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Interactive Dental Chart -->
+<div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden shadow-2xl mb-6">
+    <div class="p-5 bg-[#080d19]/40 border-b border-slate-800/40 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/10 flex items-center justify-center shadow-inner">
+                <i class="fa-solid fa-tooth text-sm"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">المخطط السني التفاعلي (Dental Chart)</h3>
+        </div>
+        
+        <!-- Adult vs Child Segmented Control -->
+        <div class="flex bg-[#060b13] p-1 rounded-2xl border border-slate-800/80 text-xs font-bold font-mono">
+            <button type="button" id="btn-chart-adult" class="px-4 py-2 rounded-xl bg-teal-400 text-slate-950 transition-all select-none">بالغون (32 سن دائم)</button>
+            <button type="button" id="btn-chart-child" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white transition-all select-none">أطفال (20 سن لبني)</button>
+        </div>
+    </div>
+    
+    <div class="p-6">
+        <!-- Legend & Counts Header -->
+        <div class="flex flex-wrap gap-2.5 justify-center mb-8 border-b border-slate-800/40 pb-5 text-right font-medium">
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-[#080d19] text-slate-400 border border-slate-800">
+                <span class="w-2 h-2 rounded-full bg-slate-600"></span> سليم (<span id="count-healthy" class="font-bold">32</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-red-500/5 text-red-400 border border-red-500/10">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span> تسوس (<span id="count-caries" class="font-bold">0</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-teal-500/5 text-teal-400 border border-teal-500/10">
+                <span class="w-2 h-2 rounded-full bg-teal-400"></span> حشوة (<span id="count-filling" class="font-bold">0</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-amber-500/5 text-amber-400 border border-amber-500/10">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> تاج (<span id="count-crown" class="font-bold">0</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-slate-700/5 text-slate-300 border border-slate-700/10">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span> خلع (<span id="count-extracted" class="font-bold">0</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-sky-500/5 text-sky-400 border border-sky-500/10">
+                <span class="w-2 h-2 rounded-full bg-sky-400"></span> زرع (<span id="count-implant" class="font-bold">0</span>)
+            </span>
+            <span class="legend-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-purple-500/5 text-purple-400 border border-purple-500/10">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span> علاج عصب (<span id="count-rootcanal" class="font-bold">0</span>)
+            </span>
+        </div>
+        
+        <!-- Adult Grid -->
+        <div id="chart-adult-view" class="space-y-12 py-4">
+            <!-- Upper Jaw -->
+            <div>
+                <div class="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-4">الفك العلوي</div>
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full overflow-x-auto py-2">
+                    <!-- Left Upper: 16 to 9 -->
+                    <div id="adult-upper-left" class="flex items-center gap-1.5 sm:gap-2"></div>
+                    <!-- Divider -->
+                    <div class="w-0.5 h-16 bg-slate-800/80 mx-2 select-none pointer-events-none"></div>
+                    <!-- Right Upper: 1 to 8 -->
+                    <div id="adult-upper-right" class="flex items-center gap-1.5 sm:gap-2"></div>
+                </div>
+            </div>
+            
+            <!-- Mid Indicator -->
+            <div class="flex items-center justify-center gap-4 text-xs font-bold text-slate-400 select-none">
+                <span>يسار L</span>
+                <span class="px-2 py-1 rounded bg-[#080d19] border border-slate-800 text-[10px] text-teal-400 font-mono">L</span>
+                <span class="px-2 py-1 rounded bg-[#080d19] border border-slate-800 text-[10px] text-teal-400 font-mono">R</span>
+                <span>R يمين</span>
+            </div>
+            
+            <!-- Lower Jaw -->
+            <div>
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full overflow-x-auto py-2">
+                    <!-- Left Lower: 24 to 17 -->
+                    <div id="adult-lower-left" class="flex items-center gap-1.5 sm:gap-2"></div>
+                    <!-- Divider -->
+                    <div class="w-0.5 h-16 bg-slate-800/80 mx-2 select-none pointer-events-none"></div>
+                    <!-- Right Lower: 25 to 32 -->
+                    <div id="adult-lower-right" class="flex items-center gap-1.5 sm:gap-2"></div>
+                </div>
+                <div class="text-center text-xs font-black text-slate-500 uppercase tracking-widest mt-4">الفك السفلي</div>
+            </div>
+        </div>
+        
+        <!-- Child Grid (Deciduous) -->
+        <div id="chart-child-view" class="space-y-12 py-4 hidden">
+            <!-- Upper Jaw -->
+            <div>
+                <div class="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-4">الفك العلوي للأطفال</div>
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full overflow-x-auto py-2">
+                    <!-- Left Upper: 55 to 51 -->
+                    <div id="child-upper-left" class="flex items-center gap-1.5 sm:gap-2"></div>
+                    <!-- Divider -->
+                    <div class="w-0.5 h-16 bg-slate-800/80 mx-2 select-none pointer-events-none"></div>
+                    <!-- Right Upper: 61 to 65 -->
+                    <div id="child-upper-right" class="flex items-center gap-1.5 sm:gap-2"></div>
+                </div>
+            </div>
+            
+            <!-- Mid Indicator -->
+            <div class="flex items-center justify-center gap-4 text-xs font-bold text-slate-400 select-none">
+                <span>يسار L</span>
+                <span class="px-2 py-1 rounded bg-[#080d19] border border-slate-800 text-[10px] text-teal-400 font-mono">L</span>
+                <span class="px-2 py-1 rounded bg-[#080d19] border border-slate-800 text-[10px] text-teal-400 font-mono">R</span>
+                <span>R يمين</span>
+            </div>
+            
+            <!-- Lower Jaw -->
+            <div>
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full overflow-x-auto py-2">
+                    <!-- Left Lower: 85 to 81 -->
+                    <div id="child-lower-left" class="flex items-center gap-1.5 sm:gap-2"></div>
+                    <!-- Divider -->
+                    <div class="w-0.5 h-16 bg-slate-800/80 mx-2 select-none pointer-events-none"></div>
+                    <!-- Right Lower: 71 to 75 -->
+                    <div id="child-lower-right" class="flex items-center gap-1.5 sm:gap-2"></div>
+                </div>
+                <div class="text-center text-xs font-black text-slate-500 uppercase tracking-widest mt-4">الفك السفلي للأطفال</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Left Column -->
+    <div class="w-full lg:w-1/3 flex flex-col gap-6">
+        <!-- Patient Panel -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 border-b border-slate-800/40 pb-2">معلومات المريض</h3>
+            <div class="flex items-center gap-3.5 pb-4 mb-4 border-b border-slate-800/40">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-extrabold text-lg shadow-inner border border-teal-500/15 select-none">
+                    {{ exam.patient.first_name|make_list|first }}{{ exam.patient.last_name|make_list|first }}
+                </div>
+                <div>
+                    <a href="{% url 'patients_web:patient-detail' exam.patient.pk %}"
+                        class="font-bold text-lg text-white hover:text-teal-300 transition-colors">{{ exam.patient.full_name }}</a>
+                    <div class="text-xs text-slate-400 font-medium mt-1">{{ exam.patient.phone }}</div>
+                </div>
+            </div>
+            <div class="space-y-3.5 text-sm text-slate-300 font-medium">
+                <div class="flex justify-between"><span class="text-slate-400">الجنس:</span> <span
+                        class="font-bold text-slate-200">{{ exam.patient.get_gender_display|default:"-" }}</span>
+                </div>
+                <div class="flex justify-between"><span class="text-slate-400">تاريخ الميلاد:</span> <span
+                        class="font-bold text-slate-200">{{ exam.patient.date_of_birth|default:"-" }}</span></div>
+            </div>
+            <a href="{% url 'patients_web:patient-detail' exam.patient.pk %}"
+                class="mt-5 block text-center text-xs text-teal-400 font-bold hover:bg-teal-500/10 py-2.5 rounded-xl transition-all border border-teal-500/10 hover:border-teal-500/20">عرض الملف الطبي العام</a>
+        </div>
+
+        <!-- Metadata -->
+        <div class="bg-[#0d1527] border border-slate-800/80 rounded-3xl p-6 relative overflow-hidden shadow-2xl">
+            <i
+                class="fa-solid fa-tooth text-slate-800/20 text-6xl absolute -bottom-4 -left-2 transform -rotate-12 z-0"></i>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10 border-b border-slate-800/40 pb-2">سجل النظام
+            </h3>
+            <div class="text-xs text-slate-400 space-y-2 relative z-10 font-bold">
+                <p><strong>تاريخ الإنشاء:</strong> {{ exam.created_at|date:"Y/m/d H:i" }}</p>
+                <p><strong>معرف السجل:</strong> #EX-{{ exam.pk|stringformat:"06d" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column (Clinical Documentation) -->
+    <div class="w-full lg:w-2/3 flex flex-col gap-6">
+        <!-- chief complaint -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden shadow-2xl">
+            <div class="p-4 bg-[#080d19]/40 border-b border-slate-800/40 flex items-center gap-2.5">
+                <div
+                    class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/10 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-comment-medical text-sm"></i>
+                </div>
+                <h3 class="font-bold text-white">الشكوى الأساسية</h3>
+            </div>
+            <div class="p-6">
+                {% if exam.complaint %}
+                <p class="text-slate-300 leading-relaxed text-sm font-medium">{{ exam.complaint|linebreaksbr }}</p>
+                {% else %}
+                <p class="text-slate-500 italic text-sm font-medium">لم يتم تسجيل شكوى.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- medical advice -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden shadow-2xl">
+            <div class="p-4 bg-[#080d19]/40 border-b border-slate-800/40 flex items-center gap-2.5">
+                <div
+                    class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/10 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-user-md text-sm"></i>
+                </div>
+                <h3 class="font-bold text-white">النصائح والتعليمات الطبية</h3>
+            </div>
+            <div class="p-6">
+                {% if exam.medical_advice %}
+                <p class="text-slate-300 leading-relaxed text-sm font-medium">{{ exam.medical_advice|linebreaksbr }}</p>
+                {% else %}
+                <p class="text-slate-500 italic text-sm font-medium">لا توجد تعليمات طبية مسجلة.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- prescription -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden shadow-2xl">
+            <div class="p-4 bg-[#080d19]/40 border-b border-slate-800/40 flex items-center gap-2.5">
+                <div
+                    class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/10 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-prescription-bottle-alt text-sm"></i>
+                </div>
+                <h3 class="font-bold text-white">تفاصيل الوصفة الطبية</h3>
+            </div>
+            <div class="p-6">
+                {% if exam.prescription_notes %}
+                <div
+                    class="bg-[#080d19]/50 border border-slate-800 rounded-2xl p-4 font-mono text-sm text-slate-200 shadow-inner leading-relaxed">
+                    {{ exam.prescription_notes|linebreaksbr }}
+                </div>
+                {% else %}
+                <p class="text-slate-500 italic text-sm font-medium">لم يتم إضافة ملاحظات وصفة طبية.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium AJAX Drawer/Sidebar -->
+<div id="chart-sidebar" class="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-[#0d1527]/95 border-l border-slate-800/80 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col backdrop-blur-md">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-800/60 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 font-bold text-sm">
+                <i class="fa-solid fa-tooth"></i>
+            </div>
+            <div class="text-right">
+                <h4 id="sidebar-tooth-title" class="font-extrabold text-white text-base">السن رقم -</h4>
+                <p id="sidebar-tooth-subtitle" class="text-xs text-slate-400 font-bold mt-1">السن الدائم</p>
+            </div>
+        </div>
+        <button type="button" id="btn-close-sidebar" class="w-8 h-8 rounded-xl bg-slate-800/30 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+    </div>
+    
+    <!-- Body -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 text-right">
+        <!-- Status Indicator -->
+        <div class="bg-[#080d19]/60 border border-slate-800/60 p-4 rounded-2xl flex items-center justify-between flex-row-reverse">
+            <span class="text-xs text-slate-400 font-bold">الحالة الحالية:</span>
+            <span id="sidebar-tooth-status" class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700/50">سليم</span>
+        </div>
+        
+        <!-- Treatment logs -->
+        <div>
+            <h5 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800/40 pb-2">سجل معالجات السن</h5>
+            <div id="sidebar-procedures-list" class="space-y-3">
+                <!-- Log entries will be populated here -->
+            </div>
+        </div>
+        
+        <!-- Add new Treatment Form -->
+        <div>
+            <h5 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800/40 pb-2">تسجيل إجراء جديد</h5>
+            <form id="sidebar-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 font-bold mb-2">نوع الإجراء *</label>
+                    <select id="select-procedure" required class="w-full bg-[#060b13] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-teal-400 focus:outline-none transition-colors">
+                        <option value="">-- اختر الإجراء --</option>
+                        {% for proc in procedures %}
+                        <option value="{{ proc.id }}" data-name="{{ proc.name }}" data-category="{{ proc.category_name }}">{{ proc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 font-bold mb-2">ملاحظات الطبيب المعالج</label>
+                    <textarea id="notes-procedure" rows="3" placeholder="اكتب ملاحظاتك الطبية هنا..." class="w-full bg-[#060b13] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-teal-400 focus:outline-none transition-colors resize-none"></textarea>
+                </div>
+                <button type="submit" id="btn-save-procedure" class="w-full bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center gap-1.5 border-none">
+                    <i class="fa-solid fa-circle-check"></i> حفظ الإجراء
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Backdrop for Sidebar -->
+<div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Adult & Child Teeth Mappings
+    const adultTeethUpperLeft = [
+        { num: 16, id: 16, fdi: "28", name: "الضرس الثالث العلوي الأيسر (ضرس العقل)" },
+        { num: 15, id: 15, fdi: "27", name: "الضرس الثاني العلوي الأيسر" },
+        { num: 14, id: 14, fdi: "26", name: "الضرس الأول العلوي الأيسر" },
+        { num: 13, id: 13, fdi: "25", name: "الضاحك الثاني العلوي الأيسر" },
+        { num: 12, id: 12, fdi: "24", name: "الضاحك الأول العلوي الأيسر" },
+        { num: 11, id: 11, fdi: "23", name: "الناب العلوي الأيسر" },
+        { num: 10, id: 10, fdi: "22", name: "الرباعية العلوية اليسرى" },
+        { num: 9,  id: 9,  fdi: "21", name: "الثنية العلوية اليسرى" }
+    ];
+    const adultTeethUpperRight = [
+        { num: 1,  id: 8,  fdi: "18", name: "الضرس الثالث العلوي الأيمن (ضرس العقل)" },
+        { num: 2,  id: 7,  fdi: "17", name: "الضرس الثاني العلوي الأيمن" },
+        { num: 3,  id: 6,  fdi: "16", name: "الضرس الأول العلوي الأيمن" },
+        { num: 4,  id: 5,  fdi: "15", name: "الضاحك الثاني العلوي الأيمن" },
+        { num: 5,  id: 4,  fdi: "14", name: "الضاحك الأول العلوي الأيمن" },
+        { num: 6,  id: 3,  fdi: "13", name: "الناب العلوي الأيمن" },
+        { num: 7,  id: 2,  fdi: "12", name: "الرباعية العلوية اليمنى" },
+        { num: 8,  id: 1,  fdi: "11", name: "الثنية العلوية اليمنى" }
+    ];
+    const adultTeethLowerLeft = [
+        { num: 24, id: 17, fdi: "31", name: "الثنية السفلية اليسرى" },
+        { num: 23, id: 18, fdi: "32", name: "الرباعية السفلية اليسرى" },
+        { num: 22, id: 19, fdi: "33", name: "الناب السفلي الأيسر" },
+        { num: 21, id: 20, fdi: "34", name: "الضاحك الأول السفلي الأيسر" },
+        { num: 20, id: 21, fdi: "35", name: "الضاحك الثاني السفلي الأيسر" },
+        { num: 19, id: 22, fdi: "36", name: "الضرس الأول السفلي الأيسر" },
+        { num: 18, id: 23, fdi: "37", name: "الضرس الثاني السفلي الأيسر" },
+        { num: 17, id: 24, fdi: "38", name: "الضرس الثالث السفلي الأيسر (ضرس العقل)" }
+    ];
+    const adultTeethLowerRight = [
+        { num: 25, id: 25, fdi: "41", name: "الثنية السفلية اليمنى" },
+        { num: 26, id: 26, fdi: "42", name: "الرباعية السفلية اليمنى" },
+        { num: 27, id: 27, fdi: "43", name: "الناب السفلي الأيمن" },
+        { num: 28, id: 28, fdi: "44", name: "الضاحك الأول السفلي الأيمن" },
+        { num: 29, id: 29, fdi: "45", name: "الضاحك الثاني السفلي الأيمن" },
+        { num: 30, id: 30, fdi: "46", name: "الضرس الأول السفلي الأيمن" },
+        { num: 31, id: 31, fdi: "47", name: "الضرس الثاني السفلي الأيمن" },
+        { num: 32, id: 32, fdi: "48", name: "الضرس الثالث السفلي الأيمن (ضرس العقل)" }
+    ];
+
+    const childTeethUpperLeft = [
+        { num: 55, id: 37, fdi: "55", name: "الرحى الثانية اللبنية العلوية اليسرى" },
+        { num: 54, id: 36, fdi: "54", name: "الرحى الأولى اللبنية العلوية اليسرى" },
+        { num: 53, id: 35, fdi: "53", name: "الناب اللبني العلوي الأيسر" },
+        { num: 52, id: 34, fdi: "52", name: "الرباعية اللبنية العلوية اليسرى" },
+        { num: 51, id: 33, fdi: "51", name: "الثنية اللبنية العلوية اليسرى" }
+    ];
+    const childTeethUpperRight = [
+        { num: 61, id: 38, fdi: "61", name: "الثنية اللبنية العلوية اليمنى" },
+        { num: 62, id: 39, fdi: "62", name: "الرباعية اللبنية العلوية اليمنى" },
+        { num: 63, id: 40, fdi: "63", name: "الناب اللبني العلوي الأيمن" },
+        { num: 64, id: 41, fdi: "64", name: "الرحى الأولى اللبنية العلوية اليمنى" },
+        { num: 65, id: 42, fdi: "65", name: "الرحى الثانية اللبنية العلوية اليمنى" }
+    ];
+    const childTeethLowerLeft = [
+        { num: 85, id: 52, fdi: "85", name: "الرحى الثانية اللبنية السفلية اليسرى" },
+        { num: 84, id: 51, fdi: "84", name: "الرحى الأولى اللبنية السفلية اليسرى" },
+        { num: 83, id: 50, fdi: "83", name: "الناب اللبني السفلي الأيسر" },
+        { num: 82, id: 49, fdi: "82", name: "الرباعية اللبنية السفلية اليسرى" },
+        { num: 81, id: 48, fdi: "81", name: "الثنية اللبنية السفلية اليسرى" }
+    ];
+    const childTeethLowerRight = [
+        { num: 71, id: 43, fdi: "71", name: "الثنية اللبنية السفلية اليمنى" },
+        { num: 72, id: 44, fdi: "72", name: "الرباعية اللبنية السفلية اليمنى" },
+        { num: 73, id: 45, fdi: "73", name: "الناب اللبني السفلي الأيمن" },
+        { num: 74, id: 46, fdi: "74", name: "الرحى الأولى اللبنية السفلية اليمنى" },
+        { num: 75, id: 47, fdi: "75", name: "الرحى الثانية اللبنية السفلية اليمنى" }
+    ];
+
+    // Status Styling Mapping
+    const statusMap = {
+        "healthy": { text: "سليم", class: "bg-slate-800 text-slate-400 border border-slate-700/50" },
+        "caries": { text: "تسوس", class: "bg-red-500/10 text-red-400 border border-red-500/20" },
+        "filling": { text: "حشوة", class: "bg-teal-500/10 text-teal-400 border border-teal-500/20" },
+        "crown": { text: "تاج", class: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
+        "extracted": { text: "خلع", class: "bg-slate-700/10 text-slate-300 border border-slate-700/20" },
+        "implant": { text: "زرع", class: "bg-sky-500/10 text-sky-400 border border-sky-500/20" },
+        "rootcanal": { text: "علاج عصب", class: "bg-purple-500/10 text-purple-400 border border-purple-500/20" }
+    };
+
+    // Category mapping to tooth visual states
+    function mapCategoryToState(procName, catName) {
+        const name = ((procName || "") + " " + (catName || "")).toLowerCase().trim();
+        if (!name) return "healthy";
+        
+        if (name.includes("عصب") || name.includes("canal") || name.includes("nerve") || name.includes("conservative")) {
+            return "rootcanal";
+        }
+        if (name.includes("خلع") || name.includes("extract") || name.includes("جراحة") || name.includes("surgery")) {
+            return "extracted";
+        }
+        if (name.includes("زرع") || name.includes("implant")) {
+            return "implant";
+        }
+        if (name.includes("تاج") || name.includes("crown") || name.includes("تركيب")) {
+            return "crown";
+        }
+        if (name.includes("حشو") || name.includes("حشوة") || name.includes("filling") || name.includes("تسوس") || name.includes("caries")) {
+            return "filling";
+        }
+        return "healthy";
+    }
+
+    // 2. Render teeth function
+    function createToothSVG(tooth) {
+        return `
+            <svg class="tooth-svg w-9 h-14 sm:w-11 sm:h-16 cursor-pointer select-none transition-all" data-tooth-id="${tooth.id}" data-tooth-number="${tooth.num}" data-tooth-fdi="${tooth.fdi}" data-tooth-name="${tooth.name}">
+                <rect class="tooth-shape state-healthy transition-colors duration-200" x="1.5" y="1.5" width="37" height="53" rx="14" ry="14" />
+                <text class="tooth-text state-healthy-text font-black text-[11px] select-none pointer-events-none" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">${tooth.num}</text>
+            </svg>
+        `;
+    }
+
+    function renderSection(containerId, teethList) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = teethList.map(createToothSVG).join("");
+    }
+
+    // Render all adult grids
+    renderSection("adult-upper-left", adultTeethUpperLeft);
+    renderSection("adult-upper-right", adultTeethUpperRight);
+    renderSection("adult-lower-left", adultTeethLowerLeft);
+    renderSection("adult-lower-right", adultTeethLowerRight);
+
+    // Render all child grids
+    renderSection("child-upper-left", childTeethUpperLeft);
+    renderSection("child-upper-right", childTeethUpperRight);
+    renderSection("child-lower-left", childTeethLowerLeft);
+    renderSection("child-lower-right", childTeethLowerRight);
+
+    // 3. UI State variables
+    let selectedToothElement = null;
+    let activeToothId = null;
+    let activeToothNum = null;
+    let activeToothFdi = null;
+    let activeToothName = "";
+    
+    // Store teeth visual states
+    let teethStates = {}; // key: toothId -> val: stateString
+
+    // 4. Load Clinical Exam Items (AJAX GET)
+    function loadExamItems() {
+        fetch(`/api/procedures/exam-items/?clinical_exam={{ exam.id }}`)
+            .then(res => res.json())
+            .then(items => {
+                // Reset all states
+                teethStates = {};
+                
+                // Track counts
+                let counts = {
+                    healthy: 32,
+                    caries: 0,
+                    filling: 0,
+                    crown: 0,
+                    extracted: 0,
+                    implant: 0,
+                    rootcanal: 0
+                };
+
+                // Clear previous state classes from all SVG shapes
+                document.querySelectorAll(".tooth-svg rect").forEach(rect => {
+                    rect.className.baseVal = "tooth-shape state-healthy transition-colors duration-200";
+                });
+                document.querySelectorAll(".tooth-svg text").forEach(text => {
+                    text.className.baseVal = "tooth-text state-healthy-text font-black text-[11px] select-none pointer-events-none";
+                });
+
+                // Populate active items and states
+                items.forEach(item => {
+                    const toothId = item.toothcode;
+                    const state = mapCategoryToState(item.procedure_name, item.category_name);
+                    
+                    // We keep the most severe state or latest
+                    teethStates[toothId] = state;
+                });
+
+                // Apply states to SVG
+                Object.keys(teethStates).forEach(toothId => {
+                    const state = teethStates[toothId];
+                    const svgs = document.querySelectorAll(`[data-tooth-id="${toothId}"]`);
+                    
+                    svgs.forEach(svg => {
+                        const rect = svg.querySelector("rect");
+                        const text = svg.querySelector("text");
+                        
+                        rect.className.baseVal = `tooth-shape state-${state} transition-colors duration-200`;
+                        text.className.baseVal = `tooth-text state-${state}-text font-black text-[11px] select-none pointer-events-none`;
+                    });
+
+                    // Update counts
+                    if (state !== "healthy") {
+                        counts[state] = (counts[state] || 0) + 1;
+                    }
+                });
+
+                // Calculate healthy count as remainder of currently active view (32 or 20)
+                const isAdult = !document.getElementById("chart-adult-view").classList.contains("hidden");
+                const totalTeeth = isAdult ? 32 : 20;
+                let alteredCount = 0;
+                Object.keys(counts).forEach(k => {
+                    if (k !== "healthy") alteredCount += counts[k];
+                });
+                counts.healthy = Math.max(0, totalTeeth - alteredCount);
+
+                // Update counters in UI
+                document.getElementById("count-healthy").innerText = counts.healthy;
+                document.getElementById("count-caries").innerText = counts.caries;
+                document.getElementById("count-filling").innerText = counts.filling;
+                document.getElementById("count-crown").innerText = counts.crown;
+                document.getElementById("count-extracted").innerText = counts.extracted;
+                document.getElementById("count-implant").innerText = counts.implant;
+                document.getElementById("count-rootcanal").innerText = counts.rootcanal;
+            });
+    }
+
+    // Initial load
+    loadExamItems();
+
+    // 5. Open/Close Sidebar
+    const sidebar = document.getElementById("chart-sidebar");
+    const backdrop = document.getElementById("sidebar-backdrop");
+
+    function openSidebar() {
+        backdrop.classList.remove("hidden");
+        setTimeout(() => {
+            backdrop.classList.add("opacity-100");
+            sidebar.classList.remove("translate-x-full");
+        }, 50);
+    }
+
+    function closeSidebar() {
+        sidebar.classList.add("translate-x-full");
+        backdrop.classList.remove("opacity-100");
+        if (selectedToothElement) {
+            // Restore visual color of previously selected tooth from its model state
+            const prevId = selectedToothElement.getAttribute("data-tooth-id");
+            const prevState = teethStates[prevId] || "healthy";
+            const rect = selectedToothElement.querySelector("rect");
+            const text = selectedToothElement.querySelector("text");
+            rect.className.baseVal = `tooth-shape state-${prevState} transition-colors duration-200`;
+            text.className.baseVal = `tooth-text state-${prevState}-text font-black text-[11px] select-none pointer-events-none`;
+            selectedToothElement = null;
+        }
+        setTimeout(() => {
+            backdrop.classList.add("hidden");
+        }, 300);
+    }
+
+    document.getElementById("btn-close-sidebar").addEventListener("click", closeSidebar);
+    backdrop.addEventListener("click", closeSidebar);
+
+    // 6. Click on Tooth
+    document.addEventListener("click", function (e) {
+        const svg = e.target.closest(".tooth-svg");
+        if (!svg) return;
+
+        // If another tooth was selected, restore its status
+        if (selectedToothElement && selectedToothElement !== svg) {
+            const prevId = selectedToothElement.getAttribute("data-tooth-id");
+            const prevState = teethStates[prevId] || "healthy";
+            const rect = selectedToothElement.querySelector("rect");
+            const text = selectedToothElement.querySelector("text");
+            rect.className.baseVal = `tooth-shape state-${prevState} transition-colors duration-200`;
+            text.className.baseVal = `tooth-text state-${prevState}-text font-black text-[11px] select-none pointer-events-none`;
+        }
+
+        selectedToothElement = svg;
+        activeToothId = svg.getAttribute("data-tooth-id");
+        activeToothNum = svg.getAttribute("data-tooth-number");
+        activeToothFdi = svg.getAttribute("data-tooth-fdi");
+        activeToothName = svg.getAttribute("data-tooth-name");
+
+        // Style selected tooth visually in UI
+        const rect = svg.querySelector("rect");
+        const text = svg.querySelector("text");
+        rect.className.baseVal = "tooth-shape state-selected transition-colors duration-200";
+        text.className.baseVal = "tooth-text state-selected-text font-black text-[11px] select-none pointer-events-none";
+
+        // Set sidebar titles
+        document.getElementById("sidebar-tooth-title").innerText = `السن رقم ${activeToothNum}`;
+        document.getElementById("sidebar-tooth-subtitle").innerText = activeToothName;
+
+        // Get status badge
+        const currentState = teethStates[activeToothId] || "healthy";
+        const mapData = statusMap[currentState];
+        const statusBadge = document.getElementById("sidebar-tooth-status");
+        statusBadge.innerText = mapData.text;
+        statusBadge.className = `inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold ${mapData.class}`;
+
+        // Fetch past procedures for this tooth
+        const listContainer = document.getElementById("sidebar-procedures-list");
+        listContainer.innerHTML = `
+            <div class="text-center py-4 text-slate-500 text-xs font-bold">
+                <i class="fa-solid fa-spinner animate-spin ml-1"></i> جاري جلب السجل الطبي للسن...
+            </div>
+        `;
+
+        fetch(`/api/procedures/exam-items/by-tooth/?tooth=${activeToothId}&by=id&patient={{ exam.patient.id }}`)
+            .then(res => res.json())
+            .then(data => {
+                listContainer.innerHTML = "";
+                const items = data.items || [];
+                
+                if (items.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="text-center py-6 text-slate-500 border border-dashed border-slate-800/80 rounded-2xl text-xs font-bold bg-[#080d19]/20">
+                            لا توجد معالجات سابقة مسجلة لهذا السن.
+                        </div>
+                    `;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const date = new Date(item.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' });
+                    const statusClass = statusMap[mapCategoryToState(item.procedure_name, item.category_name)] || statusMap.healthy;
+                    
+                    listContainer.innerHTML += `
+                        <div class="bg-[#080d19]/40 border border-slate-800/50 p-3.5 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between flex-row-reverse">
+                                <span class="text-[10px] font-black text-slate-400">${date}</span>
+                                <span class="text-xs font-bold text-teal-400">${item.procedure_name}</span>
+                            </div>
+                            <div class="flex items-center justify-between flex-row-reverse mt-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded-lg ${statusClass.class} font-bold">${statusClass.text}</span>
+                                <span class="text-[10px] text-slate-500 font-bold"><i class="fa-solid fa-user-md ml-1"></i>بواسطة الطبيب</span>
+                            </div>
+                            ${item.notes ? `<p class="text-xs text-slate-300 font-medium bg-[#060b13]/50 p-2.5 rounded-xl border border-slate-900 mt-2 leading-relaxed">${item.notes}</p>` : ""}
+                        </div>
+                    `;
+                });
+            });
+
+        openSidebar();
+    });
+
+    // 7. Toggle Adult vs Child
+    const btnAdult = document.getElementById("btn-chart-adult");
+    const btnChild = document.getElementById("btn-chart-child");
+    const viewAdult = document.getElementById("chart-adult-view");
+    const viewChild = document.getElementById("chart-child-view");
+
+    btnAdult.addEventListener("click", function () {
+        btnAdult.className = "px-4 py-2 rounded-xl bg-teal-400 text-slate-950 transition-all select-none";
+        btnChild.className = "px-4 py-2 rounded-xl text-slate-400 hover:text-white transition-all select-none";
+        viewAdult.classList.remove("hidden");
+        viewChild.classList.add("hidden");
+        closeSidebar();
+        loadExamItems();
+    });
+
+    btnChild.addEventListener("click", function () {
+        btnChild.className = "px-4 py-2 rounded-xl bg-teal-400 text-slate-950 transition-all select-none";
+        btnAdult.className = "px-4 py-2 rounded-xl text-slate-400 hover:text-white transition-all select-none";
+        viewChild.classList.remove("hidden");
+        viewAdult.classList.add("hidden");
+        closeSidebar();
+        loadExamItems();
+    });
+
+    // 8. Submit New Procedure Form (AJAX POST)
+    const form = document.getElementById("sidebar-form");
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const select = document.getElementById("select-procedure");
+        const procedureId = select.value;
+        const notes = document.getElementById("notes-procedure").value;
+
+        if (!procedureId) return;
+
+        // Disable save button to avoid double clicking
+        const btnSave = document.getElementById("btn-save-procedure");
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<i class="fa-solid fa-spinner animate-spin ml-1"></i> جاري حفظ الإجراء...`;
+
+        fetch("/api/procedures/exam-items/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                clinical_exam: parseInt("{{ exam.id }}"),
+                procedure: parseInt(procedureId),
+                toothcode: parseInt(activeToothId),
+                notes: notes
+            })
+        })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            }
+            throw new Error("فشل حفظ الإجراء.");
+        })
+        .then(data => {
+            // Reset form
+            form.reset();
+            
+            // Re-enable and reset button
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i class="fa-solid fa-circle-check"></i> حفظ الإجراء`;
+
+            // Close sidebar
+            closeSidebar();
+
+            // Refresh chart states
+            loadExamItems();
+        })
+        .catch(err => {
+            alert(err.message);
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i class="fa-solid fa-circle-check"></i> حفظ الإجراء`;
+        });
+    });
+});
+</script>
+{% endblock %}

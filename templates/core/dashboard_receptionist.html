@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}لوحة الاستقبال - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reception-card {
+        background: #0d1527;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+    <div>
+        <h2 class="text-2xl font-black text-white tracking-tight">مرحباً بك، مكتب الاستقبال 👋</h2>
+        <p class="text-xs font-bold text-slate-400 mt-1.5">أدوات إدارة طابور المرضى، الحجوزات اليومية الفورية، وتسجيل المعاملات المالية.</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d1527] border border-slate-800 text-teal-400">
+            <i class="fa-solid fa-desktop me-2"></i> لوحة موظف الاستقبال
+        </span>
+    </div>
+</div>
+
+<!-- Metrics Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Queue count -->
+    <div class="reception-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">طابور المواعيد اليوم</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ queue_today_count }} مواعيد مجدولة</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 group-hover:bg-teal-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-users text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-teal-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-check text-xs"></i> <span>التنسيق نشط مع الأطباء</span>
+        </div>
+    </div>
+
+    <!-- Outstanding bills ready to checkout -->
+    <div class="reception-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">معاملات دفع معلقة بانتظار الخروج</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ pending_payments|length }} مستحقات معلقة</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center border border-orange-500/10 group-hover:bg-orange-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-orange-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-wallet text-xs"></i> <span>يتطلب تحصيل نقدي أو شبكة فوراً</span>
+        </div>
+    </div>
+
+    <!-- Quick action links -->
+    <div class="reception-card rounded-3xl p-6 relative overflow-hidden group flex flex-col justify-center">
+        <span class="text-[10px] font-bold text-slate-400 mb-2">إجراءات سريعة</span>
+        <div class="flex gap-2">
+            <a href="{% url 'patients_web:patient-create' %}" class="flex-1 bg-teal-400 hover:bg-teal-300 text-slate-950 font-extrabold text-xs py-2 px-3 rounded-xl text-center transition-all border-none">مريض جديد</a>
+            <a href="/appointments/" class="flex-1 bg-[#080d19] border border-slate-800 hover:border-slate-700 font-bold text-xs py-2 px-3 text-white rounded-xl text-center transition-all">حجز موعد</a>
+        </div>
+    </div>
+</div>
+
+<!-- Grid Split -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Today's Queue List -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 lg:col-span-2 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-white text-base">طابور المواعيد المباشر</h3>
+            <span class="bg-teal-500/10 text-teal-400 border border-teal-500/10 text-xs font-bold px-3 py-1.5 rounded-xl">متابعة الحركة</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/60 text-slate-400 text-xs border-b border-slate-800/40 font-bold">
+                        <th class="p-4 text-start font-black">اسم المريض</th>
+                        <th class="p-4 text-center font-black">الطبيب المعالج</th>
+                        <th class="p-4 text-center font-black">الوقت</th>
+                        <th class="p-4 text-center font-black">الحالة</th>
+                        <th class="p-4 text-end font-black">تحديث</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for appt in queue_today %}
+                    <tr class="hover:bg-[#080d19]/30 transition-all font-bold">
+                        <td class="p-4">
+                            <div class="flex flex-col">
+                                <span class="text-white text-xs">{{ appt.patient.full_name }}</span>
+                                <span class="text-[9px] text-slate-500 mt-1 font-semibold">{{ appt.patient.phone }}</span>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 text-xs">{{ appt.doctor.user.get_full_name|default:"د. محمد أحمد العلي" }}</td>
+                        <td class="p-4 text-center align-middle text-teal-400 text-xs">{{ appt.time|default:"09:00" }}</td>
+                        <td class="p-4 text-center align-middle">
+                            {% if appt.status == 'منجز' or appt.status == 'completed' %}
+                            <span class="inline-flex px-2 py-0.5 rounded text-[9px] bg-green-500/10 text-green-400 border border-green-500/10">منجز</span>
+                            {% elif appt.status == 'معلق' or appt.status == 'pending' %}
+                            <span class="inline-flex px-2 py-0.5 rounded text-[9px] bg-orange-500/10 text-orange-400 border border-orange-500/10">معلق</span>
+                            {% elif appt.status == 'ملغي' or appt.status == 'cancelled' %}
+                            <span class="inline-flex px-2 py-0.5 rounded text-[9px] bg-red-500/10 text-red-400 border border-red-500/10">ملغي</span>
+                            {% else %}
+                            <span class="inline-flex px-2 py-0.5 rounded text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/10">مؤكد</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-end align-middle">
+                            <a href="/appointments/" class="text-[10px] bg-[#080d19] border border-slate-800 hover:border-teal-400 hover:text-teal-400 text-slate-300 px-2 py-1 rounded-xl transition-all">تعديل الحالة</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- POS Checkout Payments Desk -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl flex flex-col justify-between">
+        <div>
+            <h3 class="font-bold text-white text-base mb-2">مكتب الفوترة المالي السريع</h3>
+            <p class="text-[10px] text-slate-400 font-bold mb-6">تحصيل فواتير الإجراءات العلاجية فور الانتهاء من الجلسة</p>
+
+            <div class="space-y-4">
+                {% for payment in pending_payments %}
+                <div class="bg-[#080d19]/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-white">{{ payment.clinical_exam.patient.full_name }}</span>
+                        <span class="text-emerald-400 font-black text-xs">${{ payment.cost|floatformat:2 }}</span>
+                    </div>
+                    <div class="text-[9px] font-semibold text-slate-400 flex justify-between items-center mt-1">
+                        <span>إجراء: <strong class="text-slate-300">{{ payment.name }}</strong></span>
+                        <span class="text-slate-500">الطبيب: {{ payment.clinical_exam.doctor.user.get_full_name|default:"د. محمد أحمد العلي" }}</span>
+                    </div>
+                    <!-- POS button action link simulated -->
+                    <a href="/billing/" class="text-[10px] bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-3 py-1.5 rounded-xl transition-all text-center mt-2 flex items-center justify-center gap-1 border-none shadow shadow-emerald-500/10">
+                        <i class="fa-solid fa-credit-card"></i> تسجيل استلام نقدي/شبكة
+                    </a>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-xs font-bold text-slate-500">لا توجد مطالبات دفع قيد المتابعة حالياً.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-[#080d19]/40 border border-slate-800 rounded-2xl p-4 mt-6">
+            <h4 class="text-xs font-bold text-teal-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-info-circle"></i> تنويه التحصيل
+            </h4>
+            <p class="text-[10px] text-slate-400 font-bold leading-relaxed">
+                يرجى التأكد من تسليم المريض سند الاستلام المطبوع بعد استلام المبلغ وتحديث حالة الإجراء في النظام.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Admin Switcher -->
+{% if is_admin_or_manager %}
+<div class="fixed bottom-6 left-6 z-50 bg-[#0d1527] border border-slate-800 rounded-2xl p-3 shadow-2xl flex items-center gap-3">
+    <span class="text-xs font-bold text-slate-400">معاينة دور:</span>
+    <select onchange="location.href='?role=' + this.value" class="bg-[#080d19] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-teal-500 font-bold">
+        <option value="manager" {% if current_role == 'manager' %}selected{% endif %}>المدير (المالي)</option>
+        <option value="doctor" {% if current_role == 'doctor' %}selected{% endif %}>الطبيب (السريري)</option>
+        <option value="receptionist" {% if current_role == 'receptionist' %}selected{% endif %}>موظف الاستقبال</option>
+        <option value="patient" {% if current_role == 'patient' %}selected{% endif %}>المريض</option>
+    </select>
+</div>
+{% endif %}
+
+{% endblock %}

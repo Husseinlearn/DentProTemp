@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}بوابة المريض - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-card {
+        background: #0d1527;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+    <div>
+        <h2 class="text-2xl font-black text-white tracking-tight">مرحباً بك في ملفك الصحي الذكي 👋</h2>
+        <p class="text-xs font-bold text-slate-400 mt-1.5">هنا يمكنك متابعة مواعيدك القادمة، مراجعة وصفاتك الطبية، وتتبع سجل علاجات أسنانك.</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d1527] border border-slate-800 text-teal-400">
+            <i class="fa-solid fa-heart me-2"></i> ملف المريض الصحي
+        </span>
+    </div>
+</div>
+
+<!-- Metrics overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Next session -->
+    <div class="patient-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">الموعد القادم المجدول</span>
+                <h3 class="text-lg font-black text-white mt-1 tracking-tight">
+                    {% for appt in upcoming_appointments %}
+                    {{ appt.date|date:"Y/m/d" }} في {{ appt.time|default:"10:30" }}
+                    {% empty %}
+                    لا توجد مواعيد نشطة
+                    {% endfor %}
+                </h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 group-hover:bg-teal-500/20 transition-all shadow-inner">
+                <i class="fa-regular fa-clock text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-teal-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-user-md text-xs"></i> 
+            <span>
+                المعالج: 
+                {% for appt in upcoming_appointments %}
+                {{ appt.doctor.user.get_full_name|default:"د. سارة خالد السالم" }}
+                {% empty %}
+                -
+                {% endfor %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Active Prescriptions -->
+    <div class="patient-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">الوصفات الطبية النشطة</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ my_prescriptions|length }} وصفات فعالة</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/10 group-hover:bg-emerald-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-capsules text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-notes-medical text-xs"></i> <span>يرجى الالتزام بالجرعات وأوقات الاستعمال</span>
+        </div>
+    </div>
+
+    <!-- Universal treated teeth codes count -->
+    <div class="patient-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">الأسنان التي تم علاجها</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ my_treatments|length }} أسنان مسجلة</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/10 group-hover:bg-blue-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-tooth text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-blue-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-xs"></i> <span>محدثة وفق كود السن FDI العالمي</span>
+        </div>
+    </div>
+</div>
+
+<!-- Split Panels -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Active Prescriptions details list -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 lg:col-span-2 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-white text-base">وصفات الأدوية النشطة الحالية</h3>
+            <span class="bg-teal-500/10 text-teal-400 border border-teal-500/10 text-xs font-bold px-3 py-1.5 rounded-xl">خطة العلاج</span>
+        </div>
+
+        <div class="space-y-4">
+            {% for rx in my_prescriptions %}
+            <div class="bg-[#080d19]/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-pills text-teal-400"></i> {{ rx.medication.name }}
+                        </h4>
+                        <span class="text-[10px] text-slate-500 font-bold block mt-1">بواسطة: {{ rx.prescribed_by.user.get_full_name|default:"د. محمد أحمد العلي" }}</span>
+                    </div>
+                    <span class="bg-emerald-500/10 border border-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">قيد الاستعمال</span>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 pt-2 border-t border-slate-800/40 text-[11px] font-bold text-slate-400">
+                    <div>
+                        <span class="text-[9px] text-slate-500 block">التكرار اليومي</span>
+                        <span class="text-slate-300 mt-1 block">{{ rx.times_per_day|default:"3 مرات يومياً" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-slate-500 block">جرعة الاستهلاك</span>
+                        <span class="text-slate-300 mt-1 block">{{ rx.dose_unit|default:"حبة بعد الأكل" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-slate-500 block">المدة المقررة</span>
+                        <span class="text-slate-300 mt-1 block">{{ rx.number_of_days|default:"5 أيام" }}</span>
+                    </div>
+                </div>
+
+                {% if rx.notes %}
+                <div class="bg-[#0c1324] border border-slate-800/60 rounded-xl p-3 text-[10px] text-slate-400 leading-relaxed font-bold">
+                    <strong class="text-teal-400">توجيه الطبيب:</strong> {{ rx.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-12 text-xs font-bold text-slate-500">لا توجد وصفات أدوية نشطة مسجلة حالياً.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Treated Tooth Progress history -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl flex flex-col justify-between">
+        <div>
+            <h3 class="font-bold text-white text-base mb-2">سجل كود سن FDI المعالج</h3>
+            <p class="text-[10px] text-slate-400 font-bold mb-6">مخطط تتبع حالة وحشو وعلاج الأسنان المنجز</p>
+
+            <div class="space-y-3">
+                {% for tx in my_treatments %}
+                <div class="bg-[#080d19]/60 border border-slate-800/80 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/15 flex items-center justify-center font-black text-xs shadow-inner">
+                        🦷 {{ tx.toothcode.tooth_number }}
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-white block">{{ tx.procedure.name }}</span>
+                        <span class="text-[9px] text-slate-500 mt-1 block font-bold">ملاحظة: {{ tx.notes|default:"علاج ناجح وقيد المتابعة" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-xs font-bold text-slate-500">لا توجد علاجات أسنان مسجلة في سجلك حتى الآن.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-[#080d19]/40 border border-slate-800 rounded-2xl p-4 mt-6">
+            <h4 class="text-xs font-bold text-teal-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-circle-question"></i> هل تحتاج إلى دعم؟
+            </h4>
+            <p class="text-[10px] text-slate-400 font-bold leading-relaxed">
+                إذا كنت تشعر بأي ألم طارئ أو تهيج، يمكنك الاتصال بمكتب استقبال العيادة مباشرة لطلب حجز موعد كشف عاجل.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Admin Switcher -->
+{% if is_admin_or_manager %}
+<div class="fixed bottom-6 left-6 z-50 bg-[#0d1527] border border-slate-800 rounded-2xl p-3 shadow-2xl flex items-center gap-3">
+    <span class="text-xs font-bold text-slate-400">معاينة دور:</span>
+    <select onchange="location.href='?role=' + this.value" class="bg-[#080d19] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-teal-500 font-bold">
+        <option value="manager" {% if current_role == 'manager' %}selected{% endif %}>المدير (المالي)</option>
+        <option value="doctor" {% if current_role == 'doctor' %}selected{% endif %}>الطبيب (السريري)</option>
+        <option value="receptionist" {% if current_role == 'receptionist' %}selected{% endif %}>موظف الاستقبال</option>
+        <option value="patient" {% if current_role == 'patient' %}selected{% endif %}>المريض</option>
+    </select>
+</div>
+{% endif %}
+
+{% endblock %}

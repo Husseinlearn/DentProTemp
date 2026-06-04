@@ -1,0 +1,58 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    container_name: dentpro_web
+    restart: unless-stopped
+    env_file: .env
+    command: ["/app/entrypoint.sh", "gunicorn"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    # استخدم فحص صحة لا يعتمد على curl (قد لا يكون مثبّتًا)
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - dentpro_network
+
+  db:
+    image: postgres:17-alpine
+    container_name: dentpro_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dentpro}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h localhost || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # غيّر منفذ المضيف لتفادي تعارض مع Postgres المحلي على ويندوز
+    ports:
+      - "5433:5432"
+    networks:
+      - dentpro_network
+
+volumes:
+  db_data:
+  static_volume:
+  media_volume:
+
+networks:
+  dentpro_network:
+    driver: bridge

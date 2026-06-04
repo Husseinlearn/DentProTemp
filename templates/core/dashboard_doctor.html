@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}لوحة تحكم الطبيب - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .queue-row {
+        transition: all 0.2s;
+    }
+    .queue-row:hover {
+        background-color: rgba(0, 194, 194, 0.03) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+    <div>
+        <h2 class="text-2xl font-black text-white tracking-tight">مرحباً بك، دكتور 👋</h2>
+        <p class="text-xs font-bold text-slate-400 mt-1.5">نظرة عامة على المواعيد والعمليات السريرية المجدولة لليوم</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d1527] border border-slate-800 text-teal-400">
+            <i class="fa-solid fa-user-md me-2"></i> لوحة العيادة السريرية
+        </span>
+    </div>
+</div>
+
+<!-- Grid metrics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Today's Appt Count -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">مواعيد العيادة اليوم</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ appointments_today_count }} مواعيد</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 group-hover:bg-teal-500/20 transition-all shadow-inner">
+                <i class="fa-regular fa-calendar-check text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-teal-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-clock text-xs"></i> <span>مقسمة على فترات صباحية ومسائية</span>
+        </div>
+    </div>
+
+    <!-- Completed today -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">الإجراءات المنجزة اليوم</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ procedures_completed_today }} إجراءات</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/10 group-hover:bg-emerald-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-stethoscope text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-check text-xs"></i> <span>تم إكمالها وإقفال سجلها الطبي</span>
+        </div>
+    </div>
+
+    <!-- Allergies / Alerts flag count -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">مرضى بحاجة لحذر صحي</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ high_risk_patients|length }} تنبيهات</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/10 group-hover:bg-red-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-red-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation text-xs"></i> <span>لديهم أمراض مزمنة أو حساسية أدوية</span>
+        </div>
+    </div>
+</div>
+
+<!-- Split Panels -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Today's Queue List -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 lg:col-span-2 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-white text-base">جدول مواعيد المرضى لليوم</h3>
+            <span class="bg-teal-500/10 text-teal-400 border border-teal-500/10 text-xs font-bold px-3 py-1.5 rounded-xl">الحالة اللحظية</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/60 text-slate-400 text-xs uppercase border-b border-slate-800/40 font-bold">
+                        <th class="p-4 text-start font-black">اسم المريض</th>
+                        <th class="p-4 text-center font-black">الوقت</th>
+                        <th class="p-4 text-center font-black">سبب الزيارة</th>
+                        <th class="p-4 text-center font-black">الحالة</th>
+                        <th class="p-4 text-end font-black">الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for appt in appointments_today %}
+                    <tr class="queue-row hover:bg-[#080d19]/30 transition-all font-bold">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-extrabold text-xs shadow-inner">
+                                    {{ appt.patient.full_name|make_list|first }}
+                                </div>
+                                <div>
+                                    <span class="text-white text-xs block">{{ appt.patient.full_name }}</span>
+                                    <span class="text-[10px] text-slate-500 mt-1 block font-semibold">{{ appt.patient.phone }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center align-middle text-teal-400 text-xs">{{ appt.time|default:"09:00" }}</td>
+                        <td class="p-4 text-center align-middle text-slate-300 text-xs">{{ appt.reason|default:"متابعة عامة" }}</td>
+                        <td class="p-4 text-center align-middle">
+                            {% if appt.status == 'منجز' or appt.status == 'completed' %}
+                            <span class="inline-flex px-2 py-1 rounded-lg text-[10px] bg-green-500/10 text-green-400 border border-green-500/10">منجز</span>
+                            {% elif appt.status == 'معلق' or appt.status == 'pending' %}
+                            <span class="inline-flex px-2 py-1 rounded-lg text-[10px] bg-orange-500/10 text-orange-400 border border-orange-500/10">معلق</span>
+                            {% else %}
+                            <span class="inline-flex px-2 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/10">مؤكد</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-end align-middle">
+                            <a href="/procedures/" class="text-xs bg-[#080d19] border border-slate-800 hover:border-teal-400 hover:text-teal-400 text-slate-300 px-3 py-1.5 rounded-xl transition-all">بدأ الفحص</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Health Alerts Panel -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl flex flex-col justify-between">
+        <div>
+            <h3 class="font-bold text-white text-base mb-2">تنبيهات الحذر الطبي</h3>
+            <p class="text-[10px] text-slate-400 font-bold mb-6">مرضى يعانون من حالات صحية حرجة بحاجة لانتباه الطبيب</p>
+
+            <div class="space-y-4">
+                {% for pt in high_risk_patients %}
+                <div class="bg-[#080d19]/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-white">{{ pt.full_name }}</span>
+                        <span class="text-[9px] font-bold bg-red-500/10 border border-red-500/10 text-red-400 px-2 py-0.5 rounded">حذر طبي</span>
+                    </div>
+                    {% if pt.diseases %}
+                    <div class="text-[10px] font-semibold text-slate-400">
+                        أمراض: 
+                        {% for disease in pt.diseases %}
+                        <span class="text-orange-400 font-bold">{{ disease.name }} ({{ disease.dental_impact|default:"متابعة ضغط الدم" }})</span>{% if not forloop.last %}، {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if pt.allergies %}
+                    <div class="text-[10px] font-semibold text-slate-400">
+                        حساسية: 
+                        {% for allergy in pt.allergies %}
+                        <span class="text-red-400 font-bold">{{ allergy.name }} ({{ allergy.allergic_reaction|default:"حكة وطفح" }})</span>{% if not forloop.last %}، {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-xs font-bold text-slate-500">لا توجد تنبيهات طبية لمرضى اليوم.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-[#080d19]/40 border border-slate-800 rounded-2xl p-4 mt-6">
+            <h4 class="text-xs font-bold text-teal-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved"></i> سياسة السلامة
+            </h4>
+            <p class="text-[10px] text-slate-400 font-bold leading-relaxed">
+                يرجى التأكد من مراجعة الحساسية الدوائية للمريض قبل التوصية بأي علاج دوائي أو مسكنات قوية.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Admin Switcher -->
+{% if is_admin_or_manager %}
+<div class="fixed bottom-6 left-6 z-50 bg-[#0d1527] border border-slate-800 rounded-2xl p-3 shadow-2xl flex items-center gap-3">
+    <span class="text-xs font-bold text-slate-400">معاينة دور:</span>
+    <select onchange="location.href='?role=' + this.value" class="bg-[#080d19] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-teal-500 font-bold">
+        <option value="manager" {% if current_role == 'manager' %}selected{% endif %}>المدير (المالي)</option>
+        <option value="doctor" {% if current_role == 'doctor' %}selected{% endif %}>الطبيب (السريري)</option>
+        <option value="receptionist" {% if current_role == 'receptionist' %}selected{% endif %}>موظف الاستقبال</option>
+        <option value="patient" {% if current_role == 'patient' %}selected{% endif %}>المريض</option>
+    </select>
+</div>
+{% endif %}
+
+{% endblock %}

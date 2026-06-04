@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل الموعد - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dark Theme Overrides */
+    body {
+        background-color: #060b13 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    main {
+        background-color: #060b13 !important;
+    }
+    
+    header {
+        background-color: #060b13 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+    }
+    
+    header span.text-slate-500, 
+    header i.text-slate-400 {
+        color: #94a3b8 !important;
+    }
+    
+    header input {
+        background-color: #0d1527 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+        color: #fff !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <a href="{% url 'appointments_web:appointment-list' %}"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة لجدول المواعيد
+    </a>
+
+    <div class="flex gap-3">
+        <a href="{% url 'appointments_web:appointment-update' appointment.pk %}"
+            class="btn bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold border-none py-1.5 px-4 rounded-xl text-sm transition-all"><i class="fa-solid fa-pen ml-1.5 text-xs"></i> تعديل الموعد</a>
+        <a href="{% url 'appointments_web:appointment-delete' appointment.pk %}"
+            class="btn bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/15 py-1.5 px-4 rounded-xl text-sm transition-all"><i class="fa-solid fa-trash ml-1.5 text-xs"></i> حذف الموعد</a>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Header Card -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden mb-6 relative shadow-2xl">
+        <div
+            class="absolute top-0 start-0 w-2 h-full {% if appointment.status == 'scheduled' %}bg-blue-500{% elif appointment.status == 'completed' %}bg-emerald-500{% else %}bg-red-500{% endif %}">
+        </div>
+        <div class="p-6 ps-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h2 class="text-2xl font-bold text-white">تفاصيل الزيارة</h2>
+                    {% if appointment.status == 'scheduled' %}
+                    <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/10">مجدول</span>
+                    {% elif appointment.status == 'completed' %}
+                    <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">مكتمل</span>
+                    {% elif appointment.status == 'cancelled' %}
+                    <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/10">ملغي</span>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700/50">{{ appointment.status }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-slate-400 font-bold">معرف الزيارة: {{ appointment.id|truncatechars:12 }}</p>
+            </div>
+
+            <div class="flex flex-col items-start md:items-end bg-[#080d19]/60 p-4 rounded-2xl border border-slate-800/50 text-right">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">التاريخ والوقت المجدول</span>
+                <span class="text-base font-extrabold text-white">
+                    <i class="fa-regular fa-calendar text-teal-400 ml-1.5 text-sm"></i> {{ appointment.date|date:"l, Y/m/d" }}
+                </span>
+                <span class="text-sm font-bold text-slate-300 mt-1.5">
+                    <i class="fa-regular fa-clock text-teal-400 ml-1.5 text-xs"></i> {{ appointment.time|time:"H:i A"|default:"الوقت غير محدد" }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Patient Panel -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 flex flex-col h-full shadow-2xl">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2.5 border-b border-slate-800/40 pb-3"><i
+                    class="fa-solid fa-user-injured text-teal-400"></i> معلومات المريض</h3>
+
+            <div class="flex items-center gap-4 mb-5">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-lg font-extrabold shadow-inner border border-teal-500/15 select-none">
+                    {{ appointment.patient.first_name|make_list|first }}{{ appointment.patient.last_name|make_list|first }}
+                </div>
+                <div>
+                    <a href="{% url 'patients_web:patient-detail' appointment.patient.pk %}"
+                        class="font-bold text-lg text-white hover:text-teal-300 transition-colors">{{ appointment.patient.full_name }}</a>
+                    <div class="text-xs text-slate-400 font-medium mt-1">{{ appointment.patient.phone }}</div>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-4 border-t border-slate-800/40">
+                <a href="{% url 'patients_web:patient-detail' appointment.patient.pk %}"
+                    class="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1">
+                    عرض الملف الطبي الكامل <i class="fa-solid fa-arrow-left text-[9px] mr-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Doctor Panel -->
+        <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 flex flex-col h-full shadow-2xl">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2.5 border-b border-slate-800/40 pb-3"><i
+                    class="fa-solid fa-user-doctor text-teal-400"></i> الطبيب المعالج</h3>
+
+            <div class="flex items-center gap-4 mb-5">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/15 text-teal-400 flex items-center justify-center text-lg font-bold shadow-inner">
+                    <i class="fa-solid fa-stethoscope text-sm"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-lg text-white">د. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</div>
+                    <div class="text-xs text-slate-400 font-medium mt-1">{{ appointment.doctor.specialization|default:"طب الأسنان العام" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Panel -->
+        <div class="md:col-span-2 bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl">
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2.5 border-b border-slate-800/40 pb-3"><i
+                    class="fa-solid fa-clipboard-list text-teal-400"></i> دواعي الزيارة والملاحظات</h3>
+
+            <div class="bg-[#080d19]/40 border border-slate-800/60 rounded-2xl p-5">
+                <h4 class="font-bold text-slate-200 mb-2">الشكوى الأساسية / سبب الزيارة</h4>
+                <p class="text-slate-300 text-sm leading-relaxed">{{ appointment.reason|default:"<span class='italic text-slate-500'>لم يتم تسجيل سبب محدد للزيارة.</span>"|safe }}</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

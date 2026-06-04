@@ -1,0 +1,58 @@
+[
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "العلاجات الوقائية",
+            "description": "إجراءات للحفاظ على صحة الأسنان ومنع التسوس وأمراض اللثة.",
+            "created_at": "2025-08-13T19:30:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "حشوات وعلاجات التسوس",
+            "description": "إصلاح الأسنان التالفة أو المسوسة لاستعادة وظيفتها وشكلها.",
+            "created_at": "2025-08-13T19:31:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "خلع الأسنان والجراحة الفموية",
+            "description": "عمليات إزالة الأسنان وجراحات الفم والفكين بما فيها ضروس العقل.",
+            "created_at": "2025-08-13T19:32:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "تركيبات الأسنان",
+            "description": "تيجان وجسور وتعويضات ثابتة/متحركة لاستبدال الأسنان المفقودة.",
+            "created_at": "2025-08-13T19:33:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "تجميل الأسنان",
+            "description": "تحسين مظهر الابتسامة مثل التبييض والقشور التجميلية.",
+            "created_at": "2025-08-13T19:34:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "تقويم الأسنان",
+            "description": "تصحيح تزاحم الأسنان وعلاقات الفكين باستخدام أجهزة التقويم.",
+            "created_at": "2025-08-13T19:35:00Z"
+        }
+    },
+    {
+        "model": "procedures.procedurecategory",
+        "fields": {
+            "name": "زراعة الأسنان",
+            "description": "تثبيت غرسات في العظم لتعويض الأسنان ودعم التركيبات.",
+            "created_at": "2025-08-13T19:36:00Z"
+        }
+    }
+]

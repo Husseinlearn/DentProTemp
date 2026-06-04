@@ -1,0 +1,310 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DentPro Dashboard{% endblock %}</title>
+    <!-- Bootstrap 5 RTL CSS (Local) -->
+    <link href="{% static 'css/bootstrap.rtl.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Tailwind CSS (Local) -->
+    <script src="{% static 'js/tailwind.js' %}"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D9596',      // Main Dental Teal
+                        secondary: '#244F76',    // Deep Navy
+                        accent: '#9AD0C2',       // Soft Mint Accent
+                        cream: '#EBF2D5',        // Accent Pale Cream
+                        surface: '#0d1527',
+                        teal: {
+                            50: '#f4fbf9',
+                            100: '#e6f7f3',
+                            200: '#c2edd8',
+                            300: '#c2ede5',
+                            400: '#9AD0C2', // Soft Mint
+                            500: '#2D9596', // Primary Teal
+                            600: '#247a7b',
+                            700: '#1e6263',
+                            800: '#1a4f50',
+                            900: '#244F76', // Deep Navy
+                            950: '#0b1824',
+                        },
+                        slate: {
+                            50: '#f4f6f8',
+                            100: '#e8edf1',
+                            200: '#cbd7e2',
+                            300: '#9fb3c6',
+                            400: '#6c8aa6',
+                            500: '#244F76', // Deep Navy
+                            600: '#1b3b59',
+                            700: '#142c43',
+                            800: '#0e1e2d',
+                            900: '#0a141f',
+                            950: '#050a0f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b1824 !important;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.2) 0px, transparent 50%) !important;
+        }
+
+        .sidebar {
+            background: #07111b;
+            color: #cbd5e1;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+            color: #cbd5e1;
+            border-radius: 50px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .sidebar-link.active,
+        .sidebar-link.active:hover {
+            background: #2D9596 !important;
+            color: #fff !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(45, 149, 150, 0.35);
+        }
+
+        /* Bootstrap overrides for modern feel */
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .btn {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            border-color: #e2e8f0;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        }
+
+        .table {
+            --bs-table-bg: transparent;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="flex h-screen overflow-hidden text-slate-200">
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 flex-shrink-0 hidden md:flex flex-col shadow-2xl z-20 transition-all duration-300 border-l border-slate-900">
+        <!-- Brand / Header Section -->
+        <div class="h-20 flex items-center justify-between px-6 border-b border-slate-900/60 mb-2">
+            <div class="flex items-center gap-3">
+                <img src="{% static 'logoSystem.png' %}" alt="DentPro Logo" class="w-11 h-11 object-contain rounded-xl shadow-lg shadow-teal-500/10 transition-transform hover:scale-105 duration-300">
+                <div class="flex flex-col">
+                    <span class="text-white text-lg font-extrabold tracking-wide">DentPro</span>
+                    <span class="text-[10px] text-slate-400 font-semibold mt-0.5">إدارة العيادة</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrollable Navigation Menu -->
+        <div class="flex-1 overflow-y-auto py-3 px-4 space-y-2">
+            <a href="/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if request.path == '/' %}active{% endif %}">
+                <i class="fa-solid fa-table-cells-large text-base w-6 text-center"></i>
+                <span>لوحة التحكم</span>
+            </a>
+            
+            <a href="/patients/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'patients' in request.path and request.path != '/' %}active{% endif %}">
+                <i class="fa-solid fa-users text-base w-6 text-center"></i>
+                <span>المرضى</span>
+            </a>
+            
+            <a href="/appointments/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'appointments' in request.path %}active{% endif %}">
+                <i class="fa-regular fa-calendar-check text-base w-6 text-center"></i>
+                <span>المواعيد</span>
+            </a>
+            
+            <a href="/medicalrecord/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'medicalrecord' in request.path %}active{% endif %}">
+                <i class="fa-regular fa-file-lines text-base w-6 text-center"></i>
+                <span>السجلات الطبية</span>
+            </a>
+            
+            <a href="/billing/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'billing' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-file-invoice-dollar text-base w-6 text-center"></i>
+                <span>الفواتير</span>
+            </a>
+            
+            <a href="/accounts/doctors/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'accounts' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-user-gear text-base w-6 text-center"></i>
+                <span>الأطباء والموظفين</span>
+            </a>
+            
+            <a href="#"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold">
+                <i class="fa-regular fa-shield text-base w-6 text-center"></i>
+                <span>الصلاحيات</span>
+            </a>
+            
+            <a href="#"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold">
+                <i class="fa-solid fa-capsules text-base w-6 text-center"></i>
+                <span>الوصفات الطبية</span>
+            </a>
+            
+            <a href="/procedures/"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'procedures' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-stethoscope text-base w-6 text-center"></i>
+                <span>الإجراءات العلاجية</span>
+            </a>
+
+            <!-- Divider -->
+            <hr class="border-slate-800/60 my-4" />
+
+            <a href="#"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold">
+                <i class="fa-regular fa-bell text-base w-6 text-center"></i>
+                <span>الإشعارات</span>
+            </a>
+            
+            <a href="#"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold">
+                <i class="fa-solid fa-gear text-base w-6 text-center"></i>
+                <span>الإعدادات</span>
+            </a>
+            
+            <a href="{% url 'accounts_web:logout' %}"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-500/10 hover:text-red-400">
+                <i class="fa-solid fa-arrow-right-from-bracket text-base w-6 text-center transform rotate-180"></i>
+                <span>تسجيل الخروج</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#060b13]">
+        <!-- Top Header -->
+        <header class="h-16 bg-[#060b13] border-b border-slate-800/60 flex items-center justify-between px-6 z-10">
+            <div class="flex items-center">
+                <button class="md:hidden text-slate-400 hover:text-slate-200 focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="hidden md:flex relative ms-4">
+                    <i class="fa-solid fa-search absolute start-3 top-1/2 transform -translate-y-1/2 text-slate-500"></i>
+                    <input type="text"
+                        class="ps-10 pe-4 py-2 bg-[#0d1527] border border-slate-800/80 text-white placeholder-slate-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64 transition-all"
+                        placeholder="البحث في كل مكان...">
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="text-slate-400 hover:text-teal-400 transition-colors relative">
+                    <i class="fa-regular fa-bell text-xl"></i>
+                    <span class="absolute top-0 end-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div
+                    class="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-black cursor-pointer shadow-sm hover:bg-teal-500/20 transition-all select-none">
+                    أ
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-[#060b13] p-6">
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible bg-white border-s-4 shadow-sm fade show flex items-center p-4 rounded-lg {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' or message.tags == 'danger' %}border-red-500{% else %}border-blue-500{% endif %}"
+                    role="alert">
+                    {% if message.tags == 'success' %}
+                    <i class="fa-solid fa-circle-check text-green-500 text-xl me-3"></i>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fa-solid fa-circle-exclamation text-red-500 text-xl me-3"></i>
+                    {% else %}
+                    <i class="fa-solid fa-circle-info text-blue-500 text-xl me-3"></i>
+                    {% endif %}
+                    <div class="text-slate-700 font-medium">{{ message }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="max-w-7xl mx-auto animation-fade-in">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 Bundle with Popper (Local) -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <style>
+        .animation-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if object %}تعديل بيانات الطبيب{% else %}تسجيل طبيب جديد{% endif %} - DentPro
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dark Theme Overrides */
+    body {
+        background-color: #060b13 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    main {
+        background-color: #060b13 !important;
+    }
+    
+    header {
+        background-color: #060b13 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+    }
+    
+    /* Form inputs custom premium styles */
+    form input, form select, form textarea {
+        background-color: #060b13 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #fff !important;
+        border-radius: 16px !important;
+        padding: 10px 14px !important;
+        font-size: 0.875rem !important;
+        width: 100%;
+        transition: all 0.2s ease-in-out !important;
+    }
+    form input:focus, form select:focus, form textarea:focus {
+        border-color: #2dd4bf !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+    }
+    form label {
+        color: #cbd5e1 !important;
+        font-weight: 700 !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% if object %}{% url 'accounts_web:doctor-detail' object.pk %}{% else %}{% url 'accounts_web:doctor-list' %}{% endif %}"
+        class="group text-sm font-semibold text-slate-400 hover:text-teal-300 transition-colors inline-flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i> العودة
+    </a>
+</div>
+
+<div class="max-w-xl mx-auto">
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden relative p-8 shadow-2xl">
+        <div class="absolute top-0 start-0 w-full h-1 bg-gradient-to-l from-teal-400 to-indigo-500"></div>
+
+        <div class="text-center mb-8">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/10 mb-4 shadow-inner select-none">
+                <i class="fa-solid fa-user-doctor text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white">
+                {% if object %}تعديل ملف ممارس طبي{% else %}تسجيل طبيب أسنان جديد{% endif %}
+            </h2>
+            <p class="text-xs text-slate-400 mt-2 font-bold">ربط حساب مستخدم في النظام وتعيين بيانات الاعتماد المهنية.</p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/10 text-red-400 font-bold p-4 rounded-2xl border border-red-500/15 flex items-start gap-3 text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                <div>{{ form.non_field_errors }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Form Content -->
+            <div class="space-y-5">
+                <div class="bg-[#080d19]/40 border border-slate-800/60 p-5 rounded-2xl">
+                    <label for="{{ form.user.id_for_label }}" class="block text-sm font-bold text-slate-200 mb-2">حساب هوية النظام الأساسي *</label>
+                    {{ form.user }}
+                    <div class="text-slate-500 text-[11px] mt-2 font-bold"><i class="fa-solid fa-info-circle ml-1"></i>يربط هذا الحساب بين ملف الطبيب وحسابه المسجل لتسجيل الدخول.</div>
+                    <div class="text-red-400 text-xs mt-1 font-bold">{{ form.user.errors }}</div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label for="{{ form.specialization.id_for_label }}">التخصص الطبي</label>
+                        {{ form.specialization }}
+                        <div class="text-slate-500 text-xs mt-1.5 font-bold">مثال: تقويم الأسنان، معالجة الجذور...</div>
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.specialization.errors }}</div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.license_number.id_for_label }}">رقم ترخيص مزاولة المهنة *</label>
+                        {{ form.license_number }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.license_number.errors }}</div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.revenue_share.id_for_label }}">نسبة المشاركة من الإيرادات (%)</label>
+                        {{ form.revenue_share }}
+                        <div class="text-red-400 text-xs mt-1 font-bold">{{ form.revenue_share.errors }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-center gap-3 pt-6 border-t border-slate-800/40">
+                <a href="{% if object %}{% url 'accounts_web:doctor-detail' object.pk %}{% else %}{% url 'accounts_web:doctor-list' %}{% endif %}"
+                    class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors">إلغاء</a>
+                <button type="submit" class="btn bg-teal-400 text-slate-950 hover:bg-teal-300 px-6 py-2.5 rounded-xl font-bold border-none transition-all shadow-lg shadow-teal-500/10">
+                    <i class="fa-solid fa-check ml-1.5"></i> {% if object %} حفظ التعديلات {% else %}حفظ الحساب{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

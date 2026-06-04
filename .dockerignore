@@ -1,0 +1,15 @@
+
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+.env.*
+
+.vscode/
+.idea/
+dist/
+build/
+coverage/
+*.log
+*.pot

@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block title %}لوحة تحكم المدير - DentPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: #0d1527;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -10px rgba(0, 194, 194, 0.15);
+        border-color: rgba(0, 194, 194, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome & Header Section -->
+<div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+    <div>
+        <h2 class="text-2xl font-black text-white tracking-tight">مرحباً بك مجدداً، {{ request.user.first_name|default:request.user.username }} 👋</h2>
+        <p class="text-xs font-bold text-slate-400 mt-1.5">نظرة عامة على الأداء المالي والنشاط العام لعيادتك اليوم</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d1527] border border-slate-800 text-teal-400">
+            <i class="fa-solid fa-circle text-[6px] me-2 animate-pulse"></i> المدير المالي
+        </span>
+    </div>
+</div>
+
+<!-- Grid Cards metrics -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Revenue -->
+    <div class="metric-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">إجمالي الإيرادات المنجزة</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">${{ total_revenue|floatformat:2 }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 group-hover:bg-teal-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-wallet text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-teal-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-trend-up text-xs"></i> <span>+12.5% نمو هذا الشهر</span>
+        </div>
+    </div>
+
+    <!-- Active Patients -->
+    <div class="metric-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">المرضى النشطين</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ total_patients }} مريض</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/10 group-hover:bg-blue-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-users text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-blue-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-trend-up text-xs"></i> <span>+8 مرضى جدد هذا الأسبوع</span>
+        </div>
+    </div>
+
+    <!-- Completed Treatments -->
+    <div class="metric-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">علاجات منجزة بالكامل</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ completed_procedures_count }} إجراء</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-green-500/10 text-green-400 flex items-center justify-center border border-green-500/10 group-hover:bg-green-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-circle-check text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-green-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-check text-xs"></i> <span>إغلاق بنسبة 94% من الحالات</span>
+        </div>
+    </div>
+
+    <!-- Pending Procedures -->
+    <div class="metric-card rounded-3xl p-6 relative overflow-hidden group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <span class="text-xs font-bold text-slate-400">علاجات معلقة (قيد الفوترة)</span>
+                <h3 class="text-2xl font-black text-white mt-1 tracking-tight">{{ pending_procedures_count }} إجراء</h3>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center border border-orange-500/10 group-hover:bg-orange-500/20 transition-all shadow-inner">
+                <i class="fa-solid fa-clock text-lg"></i>
+            </div>
+        </div>
+        <div class="text-[10px] text-orange-400 font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-exclamation-circle text-xs"></i> <span>بانتظار تأكيد الدفع الفوري</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Split Panel Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Doctor Revenue Shares (Col-Span-2) -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 lg:col-span-2 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h3 class="font-bold text-white text-base">حصص الأطباء من الإيرادات المنجزة</h3>
+                <p class="text-[10px] text-slate-400 font-bold mt-1">توزيع الإيرادات المستحقة للأطباء بناءً على نسبة المشاركة</p>
+            </div>
+            <span class="bg-teal-500/10 text-teal-400 border border-teal-500/10 text-xs font-bold px-3 py-1.5 rounded-xl">حساب تلقائي</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/60 text-slate-400 text-xs uppercase border-b border-slate-800/40 font-bold">
+                        <th class="p-4 text-start font-black">معلومات الطبيب</th>
+                        <th class="p-4 text-center font-black">التصنيف</th>
+                        <th class="p-4 text-center font-black">إجمالي إيراد الإجراءات</th>
+                        <th class="p-4 text-center font-black">النسبة</th>
+                        <th class="p-4 text-end font-black">صافي مستحقات الطبيب</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for share in doctor_shares %}
+                    <tr class="hover:bg-[#080d19]/30 transition-all font-bold">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-extrabold text-xs shadow-inner">
+                                    {{ share.initials }}
+                                </div>
+                                <div>
+                                    <span class="text-white text-xs block">{{ share.doctor_name }}</span>
+                                    <span class="text-[10px] text-slate-500 mt-1 block font-semibold">{{ share.specialization }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center align-middle">
+                            <span class="inline-flex px-2 py-1 rounded-lg text-[10px] bg-slate-800 text-slate-300">أخصائي</span>
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-bold text-xs">${{ share.revenue|floatformat:2 }}</td>
+                        <td class="p-4 text-center align-middle">
+                            <span class="bg-teal-500/10 text-teal-400 border border-teal-500/15 text-[10px] px-2 py-1 rounded-lg">{{ share.share_percent }}%</span>
+                        </td>
+                        <td class="p-4 text-end align-middle text-emerald-400 font-black text-xs">${{ share.earnings|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Billing Snapshot & Analytics -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 flex flex-col justify-between shadow-2xl">
+        <div>
+            <h3 class="font-bold text-white text-base mb-2">توزيع فواتير الإجراءات</h3>
+            <p class="text-[10px] text-slate-400 font-bold mb-6">الحالة المالية اللحظية لجميع الحالات المسجلة</p>
+
+            <div class="space-y-4">
+                <!-- Completed bar -->
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-2">
+                        <span class="text-slate-300">فواتير مدفوعة بالكامل</span>
+                        <span class="text-green-400">{{ completed_procedures_count }} إجراء ({{ completed_procedures_count|add:pending_procedures_count|add:cancelled_procedures_count|default:1 }} إجمالي)</span>
+                    </div>
+                    <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-green-500 rounded-full" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <!-- Pending bar -->
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-2">
+                        <span class="text-slate-300">مطالبات معلقة وقيد التحصيل</span>
+                        <span class="text-orange-400">{{ pending_procedures_count }} إجراء</span>
+                    </div>
+                    <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-500 rounded-full" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <!-- Cancelled bar -->
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-2">
+                        <span class="text-slate-300">إجراءات ملغاة ومستبعدة</span>
+                        <span class="text-red-400">{{ cancelled_procedures_count }} إجراء</span>
+                    </div>
+                    <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-red-500 rounded-full" style="width: 5%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info Card -->
+        <div class="bg-[#080d19]/60 border border-slate-800 rounded-2xl p-4 mt-6">
+            <h4 class="text-xs font-bold text-teal-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb"></i> إشعار التدفق النقدي
+            </h4>
+            <p class="text-[10px] text-slate-400 font-bold leading-relaxed">
+                معدل تحصيل المستحقات يبلغ 92% حالياً، ننصح بمراجعة قائمة الحالات المعلقة بانتظام لتفادي أي عجز نقدي.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Panel -->
+<div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl mb-8">
+    <h3 class="font-bold text-white text-base mb-6">الوصول السريع للعمليات الإدارية</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="{% url 'accounts_web:doctor-create' %}" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-[#080d19]/40 border border-slate-800 hover:border-teal-500/40 hover:bg-teal-500/5 transition-all text-center group">
+            <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/10 mb-3 group-hover:scale-105 transition-all">
+                <i class="fa-solid fa-user-plus text-base"></i>
+            </div>
+            <span class="text-xs font-bold text-white mb-1">تسجيل طبيب جديد</span>
+            <span class="text-[9px] font-bold text-slate-500">إدخال وحساب الأرباح</span>
+        </a>
+
+        <a href="{% url 'patients_web:patient-create' %}" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-[#080d19]/40 border border-slate-800 hover:border-teal-500/40 hover:bg-teal-500/5 transition-all text-center group">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/10 mb-3 group-hover:scale-105 transition-all">
+                <i class="fa-solid fa-circle-plus text-base"></i>
+            </div>
+            <span class="text-xs font-bold text-white mb-1">إضافة مريض جديد</span>
+            <span class="text-[9px] font-bold text-slate-500">الملف والديموغرافيات</span>
+        </a>
+
+        <a href="{% url 'accounts_web:doctor-list' %}" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-[#080d19]/40 border border-slate-800 hover:border-teal-500/40 hover:bg-teal-500/5 transition-all text-center group">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/10 mb-3 group-hover:scale-105 transition-all">
+                <i class="fa-solid fa-users-gear text-base"></i>
+            </div>
+            <span class="text-xs font-bold text-white mb-1">الكادر الطبي والوظيفي</span>
+            <span class="text-[9px] font-bold text-slate-500">قائمة الفريق والرواتب</span>
+        </a>
+
+        <a href="/admin/" class="flex flex-col items-center justify-center p-5 rounded-2xl bg-[#080d19]/40 border border-slate-800 hover:border-teal-500/40 hover:bg-teal-500/5 transition-all text-center group">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/10 mb-3 group-hover:scale-105 transition-all">
+                <i class="fa-solid fa-gears text-base"></i>
+            </div>
+            <span class="text-xs font-bold text-white mb-1">لوحة تحكم المشرف</span>
+            <span class="text-[9px] font-bold text-slate-500">إدارة قواعد البيانات</span>
+        </a>
+    </div>
+</div>
+
+<!-- Floating Admin Switcher -->
+{% if is_admin_or_manager %}
+<div class="fixed bottom-6 left-6 z-50 bg-[#0d1527] border border-slate-800 rounded-2xl p-3 shadow-2xl flex items-center gap-3">
+    <span class="text-xs font-bold text-slate-400">معاينة دور:</span>
+    <select onchange="location.href='?role=' + this.value" class="bg-[#080d19] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-teal-500 font-bold">
+        <option value="manager" {% if current_role == 'manager' %}selected{% endif %}>المدير (المالي)</option>
+        <option value="doctor" {% if current_role == 'doctor' %}selected{% endif %}>الطبيب (السريري)</option>
+        <option value="receptionist" {% if current_role == 'receptionist' %}selected{% endif %}>موظف الاستقبال</option>
+        <option value="patient" {% if current_role == 'patient' %}selected{% endif %}>المريض</option>
+    </select>
+</div>
+{% endif %}
+
+{% endblock %}
