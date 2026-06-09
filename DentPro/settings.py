@@ -67,10 +67,10 @@ UNFOLD = {
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.security.SecurityMiddleware',    # يجب أن يكون الأول
+    'whitenoise.middleware.WhiteNoiseMiddleware',       # يجب أن يكون الثاني مباشرة
+    'corsheaders.middleware.CorsMiddleware',            # يمكن وضعه هنا
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
