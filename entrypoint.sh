@@ -8,8 +8,8 @@ import os, time, psycopg2
 from psycopg2 import OperationalError
 host = os.getenv("POSTGRES_HOST","db")
 port = int(os.getenv("POSTGRES_PORT","5432"))
-user = os.getenv("POSTGRES_USER","dentuser")
-pwd  = os.getenv("POSTGRES_PASSWORD","dentpass")
+user = os.getenv("POSTGRES_USER","postgres")
+pwd  = os.getenv("POSTGRES_PASSWORD","123456")
 db   = os.getenv("POSTGRES_DB","dentpro")
 for i in range(30):
     try:
