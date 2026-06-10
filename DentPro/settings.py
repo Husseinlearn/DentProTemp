@@ -178,11 +178,16 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# هذا الجزء هو المسؤول عن جلب ملفات Bootstrap و Tailwind
+# تأكد أن لديك مجلد اسمه static في المسار الرئيسي لمشروعك (بجانب manage.py)
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# الإعداد الذكي: يعمل في السيرفر ولا يزعجك محلياً
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = BASE_DIR / "media"
 
