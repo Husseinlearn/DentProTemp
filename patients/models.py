@@ -29,6 +29,7 @@ class Patient(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
     is_archived = models.BooleanField(default=False, verbose_name=_("Archived"))
+    clinic = models.ForeignKey('accounts.Clinic', on_delete=models.CASCADE, null=True, blank=True, related_name='patients')
 
     # علاقات M2M عبر جداول ربط (للاستعلام السهل)
     diseases = models.ManyToManyField(

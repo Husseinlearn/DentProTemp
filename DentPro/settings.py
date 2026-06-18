@@ -201,4 +201,6 @@ def health(_):
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_URL = 'accounts_web:login'
+
 # 'unfold', # 'simpleui', #'adminlte3',

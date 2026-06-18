@@ -10,6 +10,21 @@ from django.db import models
 # --------------------------------------------------------------------
 # Custom :  بيانات المستخدم الاساسية ويدعم إضافة خصائص إضافية
 # --------------------------------------------------------------------
+class Clinic(models.Model):
+    """نموذج العيادة لربط الموظفين والمرضى والمواعيد بها"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, verbose_name=_("Clinic Name"))
+    address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Phone"))
+    email = models.EmailField(blank=True, null=True, verbose_name=_("Email"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    logo = models.ImageField(upload_to='clinic_logos/', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class CustomUser(AbstractUser):
     """مستخدم مخصص لدعم التوسعة والأدوار"""
     USER_TYPE_CHOICES = [
@@ -26,6 +41,7 @@ class CustomUser(AbstractUser):
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES,null=True,)
     # is_verified = models.BooleanField(default=False) # This field is for email verification and will be added later.
     is_archived = models.BooleanField(default=False)
+    clinic = models.ForeignKey('Clinic', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 

@@ -18,6 +18,7 @@ class Appointment(models.Model):
     ]
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='appointments')
+    clinic = models.ForeignKey('accounts.Clinic', on_delete=models.CASCADE, null=True, blank=True, related_name='appointments')
     date = models.DateField()
     time = models.TimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

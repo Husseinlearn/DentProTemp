@@ -1,15 +1,16 @@
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import ClinicalExam, DentalProcedure
 from .forms import ClinicalExamForm, DentalProcedureForm
 
-class ClinicalExamListView(ListView):
+class ClinicalExamListView(LoginRequiredMixin, ListView):
     model = ClinicalExam
     template_name = 'procedures/clinicalexam_list.html'
     context_object_name = 'exams'
 
-class ClinicalExamDetailView(DetailView):
+class ClinicalExamDetailView(LoginRequiredMixin, DetailView):
     model = ClinicalExam
     template_name = 'procedures/clinicalexam_detail.html'
     context_object_name = 'exam'
@@ -19,7 +20,7 @@ class ClinicalExamDetailView(DetailView):
         context['procedures'] = DentalProcedure.objects.filter(is_active=True).select_related('category')
         return context
 
-class ClinicalExamCreateView(CreateView):
+class ClinicalExamCreateView(LoginRequiredMixin, CreateView):
     model = ClinicalExam
     form_class = ClinicalExamForm
     template_name = 'procedures/clinicalexam_form.html'
@@ -29,7 +30,7 @@ class ClinicalExamCreateView(CreateView):
         messages.success(self.request, "Clinical Exam created successfully.")
         return super().form_valid(form)
 
-class ClinicalExamUpdateView(UpdateView):
+class ClinicalExamUpdateView(LoginRequiredMixin, UpdateView):
     model = ClinicalExam
     form_class = ClinicalExamForm
     template_name = 'procedures/clinicalexam_form.html'
@@ -41,7 +42,7 @@ class ClinicalExamUpdateView(UpdateView):
         messages.success(self.request, "Clinical Exam updated successfully.")
         return super().form_valid(form)
 
-class ClinicalExamDeleteView(DeleteView):
+class ClinicalExamDeleteView(LoginRequiredMixin, DeleteView):
     model = ClinicalExam
     template_name = 'procedures/clinicalexam_confirm_delete.html'
     success_url = reverse_lazy('procedures_web:exam-list')

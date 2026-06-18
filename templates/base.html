@@ -8,7 +8,10 @@
     <title>{% block title %}DentPro Dashboard{% endblock %}</title>
     <!-- Bootstrap 5 RTL CSS (Local) -->
     <link href="{% static 'css/bootstrap.rtl.min.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- FontAwesome (Local) -->
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <!-- Cairo Google Font (Local) -->
+    <link rel="stylesheet" href="{% static 'css/cairo.css' %}">
     <!-- Tailwind CSS (Local) -->
     <script src="{% static 'js/tailwind.js' %}"></script>
     <script>
@@ -60,8 +63,6 @@
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
-
         :root {
             --bg-color: #0b1824;
             --main-bg: #060b13;

@@ -1,20 +1,21 @@
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import MedicalRecord, Attachment
 from .forms import MedicalRecordForm, AttachmentForm
 
-class MedicalRecordListView(ListView):
+class MedicalRecordListView(LoginRequiredMixin, ListView):
     model = MedicalRecord
     template_name = 'medicalrecord/record_list.html'
     context_object_name = 'records'
 
-class MedicalRecordDetailView(DetailView):
+class MedicalRecordDetailView(LoginRequiredMixin, DetailView):
     model = MedicalRecord
     template_name = 'medicalrecord/record_detail.html'
     context_object_name = 'record'
 
-class MedicalRecordCreateView(CreateView):
+class MedicalRecordCreateView(LoginRequiredMixin, CreateView):
     model = MedicalRecord
     form_class = MedicalRecordForm
     template_name = 'medicalrecord/record_form.html'
@@ -24,7 +25,7 @@ class MedicalRecordCreateView(CreateView):
         messages.success(self.request, "Medical Record created successfully.")
         return super().form_valid(form)
 
-class MedicalRecordUpdateView(UpdateView):
+class MedicalRecordUpdateView(LoginRequiredMixin, UpdateView):
     model = MedicalRecord
     form_class = MedicalRecordForm
     template_name = 'medicalrecord/record_form.html'
@@ -36,7 +37,7 @@ class MedicalRecordUpdateView(UpdateView):
         messages.success(self.request, "Medical Record updated successfully.")
         return super().form_valid(form)
 
-class MedicalRecordDeleteView(DeleteView):
+class MedicalRecordDeleteView(LoginRequiredMixin, DeleteView):
     model = MedicalRecord
     template_name = 'medicalrecord/record_confirm_delete.html'
     success_url = reverse_lazy('medicalrecord_web:record-list')
@@ -45,7 +46,7 @@ class MedicalRecordDeleteView(DeleteView):
         messages.success(self.request, "Medical Record deleted successfully.")
         return super().form_valid(form)
 
-class AttachmentCreateView(CreateView):
+class AttachmentCreateView(LoginRequiredMixin, CreateView):
     model = Attachment
     form_class = AttachmentForm
     template_name = 'medicalrecord/attachment_form.html'

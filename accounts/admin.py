@@ -1,18 +1,22 @@
-# from django.contrib import admin
 from django.contrib import admin
-from .models import CustomUser, UserProfile, Doctor, Role, UserRole
+from .models import CustomUser, UserProfile, Doctor, Role, UserRole, Clinic
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
+@admin.register(Clinic)
+class ClinicAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone', 'email', 'created_at')
+    search_fields = ('name', 'phone', 'email')
+
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('first_name', 'username', 'user_type', 'is_staff', 'is_superuser', 'is_archived')
+    list_display = ('first_name', 'username', 'user_type', 'clinic', 'is_staff', 'is_superuser', 'is_archived')
     search_fields = ('email', 'username')
-    list_filter = ('user_type', 'is_staff', 'is_superuser', 'is_archived')
+    list_filter = ('user_type', 'clinic', 'is_staff', 'is_superuser', 'is_archived')
     ordering = ('email',)
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('user_type', 'is_archived')}),
+        (None, {'fields': ('user_type', 'is_archived', 'clinic')}),
     )
 
 

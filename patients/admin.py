@@ -13,9 +13,9 @@ class PatientAllergyInline(admin.TabularInline):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "phone", "email", "is_archived", "created_at")
+    list_display = ("full_name", "phone", "email", "clinic", "is_archived", "created_at")
     search_fields = ("first_name", "last_name", "phone", "email")
-    list_filter = ("is_archived",)
+    list_filter = ("clinic", "is_archived")
     inlines = [PatientDiseaseInline, PatientAllergyInline]
 
 @admin.register(Disease)

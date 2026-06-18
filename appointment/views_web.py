@@ -1,13 +1,14 @@
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Appointment
 from .forms import AppointmentForm
 
 from django.utils import timezone
 from django.db.models import Q
 
-class AppointmentListView(ListView):
+class AppointmentListView(LoginRequiredMixin, ListView):
     model = Appointment
     template_name = 'appointment/appointment_list.html'
     context_object_name = 'appointments'
@@ -66,7 +67,7 @@ class AppointmentListView(ListView):
 
         return context
 
-class AppointmentDetailView(DetailView):
+class AppointmentDetailView(LoginRequiredMixin, DetailView):
     model = Appointment
     template_name = 'appointment/appointment_detail.html'
     context_object_name = 'appointment'
@@ -78,7 +79,7 @@ class AppointmentDetailView(DetailView):
             return Appointment.objects.get(id=pk)
         return super().get_object(queryset)
 
-class AppointmentCreateView(CreateView):
+class AppointmentCreateView(LoginRequiredMixin, CreateView):
     model = Appointment
     form_class = AppointmentForm
     template_name = 'appointment/appointment_form.html'
@@ -88,7 +89,7 @@ class AppointmentCreateView(CreateView):
         messages.success(self.request, "Appointment created successfully.")
         return super().form_valid(form)
 
-class AppointmentUpdateView(UpdateView):
+class AppointmentUpdateView(LoginRequiredMixin, UpdateView):
     model = Appointment
     form_class = AppointmentForm
     template_name = 'appointment/appointment_form.html'
@@ -103,7 +104,7 @@ class AppointmentUpdateView(UpdateView):
         messages.success(self.request, "Appointment updated successfully.")
         return super().form_valid(form)
 
-class AppointmentDeleteView(DeleteView):
+class AppointmentDeleteView(LoginRequiredMixin, DeleteView):
     model = Appointment
     template_name = 'appointment/appointment_confirm_delete.html'
     success_url = reverse_lazy('appointments_web:appointment-list')
