@@ -1,13 +1,17 @@
+import uuid
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, FormView, DeleteView, View
+from django.views.generic import ListView, DetailView, FormView, DeleteView, View, UpdateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .models import CustomUser, Doctor, UserProfile
-from .forms import EmployeeCreateForm, EmployeeUpdateForm, UserProfileForm
+from .models import CustomUser, Doctor, UserProfile, Clinic
+from .forms import (
+    EmployeeCreateForm, EmployeeUpdateForm, UserProfileForm,
+    ClinicRegisterForm, ClinicSettingsForm
+)
 
 class DoctorListView(LoginRequiredMixin, ListView):
     model = CustomUser
@@ -16,6 +20,7 @@ class DoctorListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return CustomUser.objects.filter(
+            clinic=self.request.user.clinic,
             user_type__in=['doctor', 'receptionist', 'assistant', 'manager', 'admin'],
             is_archived=False
         )
@@ -189,6 +194,9 @@ class DoctorDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'staff'
     pk_url_kwarg = 'pk'
 
+    def get_queryset(self):
+        return CustomUser.objects.filter(clinic=self.request.user.clinic)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.get_object()
@@ -217,7 +225,8 @@ class DoctorCreateView(LoginRequiredMixin, FormView):
             email=cleaned_data['email'],
             first_name=cleaned_data['first_name'],
             last_name=cleaned_data['last_name'],
-            user_type=cleaned_data['user_type']
+            user_type=cleaned_data['user_type'],
+            clinic=self.request.user.clinic
         )
         user.set_password(cleaned_data['password'])
         user.save()
@@ -250,7 +259,7 @@ class DoctorUpdateView(LoginRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        self.user_obj = CustomUser.objects.get(pk=self.kwargs['pk'])
+        self.user_obj = CustomUser.objects.get(pk=self.kwargs['pk'], clinic=self.request.user.clinic)
         kwargs['user_instance'] = self.user_obj
         
         initial = {
@@ -325,6 +334,9 @@ class DoctorDeleteView(LoginRequiredMixin, DeleteView):
     model = CustomUser
     template_name = 'accounts/doctor_confirm_delete.html'
     success_url = reverse_lazy('accounts_web:doctor-list')
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(clinic=self.request.user.clinic)
 
     def form_valid(self, form):
         messages.success(self.request, "تم إزالة حساب الموظف بنجاح.")
@@ -404,3 +416,66 @@ class CustomLogoutView(View):
     def post(self, request, *args, **kwargs):
         logout(request)
         return redirect('accounts_web:login')
+
+
+class ClinicRegisterView(FormView):
+    template_name = 'accounts/clinic_register.html'
+    form_class = ClinicRegisterForm
+    success_url = reverse_lazy('core_web:dashboard')
+
+    def form_valid(self, form):
+        cleaned_data = form.cleaned_data
+        
+        # 1. Create Clinic
+        clinic = Clinic.objects.create(
+            name=cleaned_data['clinic_name'],
+            email=cleaned_data.get('clinic_email'),
+            phone=cleaned_data.get('clinic_phone')
+        )
+
+        # 2. Create Manager User
+        username = cleaned_data['manager_email'].split('@')[0]
+        # Ensure username uniqueness
+        if CustomUser.objects.filter(username=username).exists():
+            username = f"{username}_{uuid.uuid4().hex[:6]}"
+            
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=cleaned_data['manager_email'],
+            first_name=cleaned_data['manager_first_name'],
+            last_name=cleaned_data['manager_last_name'],
+            user_type='manager',
+            clinic=clinic
+        )
+        user.set_password(cleaned_data['password'])
+        user.save()
+
+        # Create Profile
+        UserProfile.objects.create(
+            user=user,
+            phone=cleaned_data.get('clinic_phone') or "",
+            gender='male'
+        )
+
+        # Log user in
+        login(self.request, user)
+        messages.success(self.request, "تم تسجيل العيادة وحساب مدير العيادة بنجاح!")
+        return super().form_valid(form)
+
+
+class ClinicSettingsView(LoginRequiredMixin, UpdateView):
+    model = Clinic
+    form_class = ClinicSettingsForm
+    template_name = 'accounts/clinic_settings.html'
+    success_url = reverse_lazy('core_web:dashboard')
+
+    def get_object(self, queryset=None):
+        if self.request.user.is_superuser or self.request.user.user_type == 'manager':
+            if self.request.user.clinic:
+                return self.request.user.clinic
+        from django.http import Http404
+        raise Http404("غير مسموح لك بالوصول لإعدادات هذه العيادة.")
+
+    def form_valid(self, form):
+        messages.success(self.request, "تم تحديث إعدادات العيادة بنجاح.")
+        return super().form_valid(form)

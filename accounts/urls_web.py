@@ -10,4 +10,6 @@ urlpatterns = [
     path('login/', views_web.CustomLoginView.as_view(), name='login'),
     path('logout/', views_web.CustomLogoutView.as_view(), name='logout'),
     path('profile/', views_web.ProfileView.as_view(), name='profile'),
+    path('register/', views_web.ClinicRegisterView.as_view(), name='clinic-register'),
+    path('clinic/settings/', views_web.ClinicSettingsView.as_view(), name='clinic-settings'),
 ]

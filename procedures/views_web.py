@@ -10,10 +10,16 @@ class ClinicalExamListView(LoginRequiredMixin, ListView):
     template_name = 'procedures/clinicalexam_list.html'
     context_object_name = 'exams'
 
+    def get_queryset(self):
+        return ClinicalExam.objects.filter(patient__clinic=self.request.user.clinic)
+
 class ClinicalExamDetailView(LoginRequiredMixin, DetailView):
     model = ClinicalExam
     template_name = 'procedures/clinicalexam_detail.html'
     context_object_name = 'exam'
+
+    def get_queryset(self):
+        return ClinicalExam.objects.filter(patient__clinic=self.request.user.clinic)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -26,6 +32,11 @@ class ClinicalExamCreateView(LoginRequiredMixin, CreateView):
     template_name = 'procedures/clinicalexam_form.html'
     success_url = reverse_lazy('procedures_web:exam-list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         messages.success(self.request, "Clinical Exam created successfully.")
         return super().form_valid(form)
@@ -35,6 +46,14 @@ class ClinicalExamUpdateView(LoginRequiredMixin, UpdateView):
     form_class = ClinicalExamForm
     template_name = 'procedures/clinicalexam_form.html'
     
+    def get_queryset(self):
+        return ClinicalExam.objects.filter(patient__clinic=self.request.user.clinic)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_success_url(self):
         return reverse_lazy('procedures_web:exam-detail', kwargs={'pk': self.object.pk})
 
@@ -46,6 +65,9 @@ class ClinicalExamDeleteView(LoginRequiredMixin, DeleteView):
     model = ClinicalExam
     template_name = 'procedures/clinicalexam_confirm_delete.html'
     success_url = reverse_lazy('procedures_web:exam-list')
+
+    def get_queryset(self):
+        return ClinicalExam.objects.filter(patient__clinic=self.request.user.clinic)
 
     def form_valid(self, form):
         messages.success(self.request, "Clinical Exam deleted successfully.")

@@ -15,19 +15,24 @@ class ClinicalExamForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         from django.utils import timezone
         from django.db.models import Q
         from appointment.models import Appointment
         
-        today = timezone.localdate()
-        query = Q(date=today)
-        
-        # If editing an existing instance, preserve the currently selected appointment
-        if self.instance and self.instance.pk and self.instance.appointment:
-            query = query | Q(pk=self.instance.appointment.pk)
+        if user and user.clinic:
+            self.fields['patient'].queryset = self.fields['patient'].queryset.filter(clinic=user.clinic, is_archived=False)
+            self.fields['doctor'].queryset = self.fields['doctor'].queryset.filter(user__clinic=user.clinic, user__is_archived=False)
             
-        self.fields['appointment'].queryset = Appointment.objects.filter(query)
+            today = timezone.localdate()
+            query = Q(date=today, clinic=user.clinic)
+            
+            # If editing an existing instance, preserve the currently selected appointment
+            if self.instance and self.instance.pk and self.instance.appointment:
+                query = query | Q(pk=self.instance.appointment.pk)
+                
+            self.fields['appointment'].queryset = Appointment.objects.filter(query)
 
 class DentalProcedureForm(forms.ModelForm):
     class Meta:

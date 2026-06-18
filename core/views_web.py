@@ -63,20 +63,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def _compile_manager_data(self, context):
         # 1. Total active patients
-        context['total_patients'] = Patient.objects.filter(is_archived=False).count()
+        context['total_patients'] = Patient.objects.filter(clinic=self.request.user.clinic, is_archived=False).count()
         
         # 2. Total clinical revenue (completed procedures)
-        completed_procedures = Procedure.objects.filter(status='completed')
+        completed_procedures = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='completed')
         total_rev = completed_procedures.aggregate(sum_cost=Sum('cost'))['sum_cost'] or 0
         context['total_revenue'] = float(total_rev)
         
         # 3. Billing snap (completed, pending, cancelled)
-        context['pending_procedures_count'] = Procedure.objects.filter(status='pending').count()
+        context['pending_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='pending').count()
         context['completed_procedures_count'] = completed_procedures.count()
-        context['cancelled_procedures_count'] = Procedure.objects.filter(status='cancelled').count()
+        context['cancelled_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='cancelled').count()
         
         # 4. Doctor revenue share calculations
-        doctors = Doctor.objects.select_related('user').all()
+        doctors = Doctor.objects.filter(user__clinic=self.request.user.clinic).select_related('user').all()
         doctor_shares = []
         for doc in doctors:
             doc_procedures = Procedure.objects.filter(clinical_exam__doctor=doc, status='completed')
@@ -119,7 +119,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
     def _compile_doctor_data(self, context):
         user = self.request.user
-        doctor = Doctor.objects.filter(user=user).first()
+        doctor = Doctor.objects.filter(user=user, user__clinic=user.clinic).first()
         
         # Default mock metrics
         context['procedures_completed_today'] = 4
@@ -137,6 +137,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
             # 3. Patients with high-risk health flags (chronic diseases/allergies)
             high_risk_patients = Patient.objects.filter(
+                clinic=user.clinic
+            ).filter(
                 Q(patient_diseases__isnull=False) | Q(patient_allergies__isnull=False)
             ).distinct()[:5]
             context['high_risk_patients'] = high_risk_patients
@@ -178,12 +180,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
     def _compile_receptionist_data(self, context):
         # 1. Today's appointments queue
-        today_appointments = Appointment.objects.filter(date=datetime.date.today()).select_related('patient', 'doctor__user').order_by('time')
+        today_appointments = Appointment.objects.filter(clinic=self.request.user.clinic, date=datetime.date.today()).select_related('patient', 'doctor__user').order_by('time')
         context['queue_today'] = today_appointments
         context['queue_today_count'] = today_appointments.count()
         
         # 2. Check-in status / pending payments
-        pending_payments = Procedure.objects.filter(status='pending').select_related('clinical_exam__patient', 'clinical_exam__doctor__user')[:5]
+        pending_payments = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='pending').select_related('clinical_exam__patient', 'clinical_exam__doctor__user')[:5]
         context['pending_payments'] = pending_payments
         
         # Fallback Mock data for Receptionist dashboard if empty
@@ -233,7 +235,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
     def _compile_patient_data(self, context):
         user = self.request.user
-        patient = Patient.objects.filter(email=user.email).first()
+        patient = Patient.objects.filter(email=user.email, clinic=user.clinic).first()
         
         if patient:
             # 1. Upcoming appointments
@@ -299,7 +301,7 @@ class SearchView(LoginRequiredMixin, ListView):
         if not query:
             return Patient.objects.none()
         
-        return Patient.objects.filter(
+        return Patient.objects.filter(clinic=self.request.user.clinic).filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(phone__icontains=query) |
@@ -315,6 +317,7 @@ class SearchView(LoginRequiredMixin, ListView):
         matched_patients = self.get_queryset()
         if matched_patients.exists():
             context['appointments'] = Appointment.objects.filter(
+                clinic=self.request.user.clinic,
                 patient__in=matched_patients
             ).select_related('patient', 'doctor__user').order_by('-date', '-time')
         else:

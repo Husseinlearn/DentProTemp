@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل العيادة - DentPro</title>
+    <!-- Bootstrap 5 RTL CSS (Local) -->
+    <link href="{% static 'css/bootstrap.rtl.min.css' %}" rel="stylesheet">
+    <!-- FontAwesome (Local) -->
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <!-- Cairo Google Font (Local) -->
+    <link rel="stylesheet" href="{% static 'css/cairo.css' %}">
+    <!-- Tailwind CSS (Local) -->
+    <script src="{% static 'js/tailwind.js' %}"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D9596',
+                        secondary: '#244F76',
+                        accent: '#9AD0C2',
+                        cream: '#EBF2D5',
+                        surface: '#0d1527',
+                        teal: {
+                            50: '#f4fbf9',
+                            100: '#e6f7f3',
+                            200: '#c2edd8',
+                            300: '#c2ede5',
+                            400: '#9AD0C2',
+                            500: '#2D9596',
+                            600: '#247a7b',
+                            700: '#1e6263',
+                            800: '#1a4f50',
+                            900: '#244F76',
+                            950: '#0b1824',
+                        },
+                        slate: {
+                            50: '#f4f6f8',
+                            100: '#e8edf1',
+                            200: '#cbd7e2',
+                            300: '#9fb3c6',
+                            400: '#6c8aa6',
+                            500: '#244F76',
+                            600: '#1b3b59',
+                            700: '#142c43',
+                            800: '#0e1e2d',
+                            900: '#0a141f',
+                            950: '#050a0f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b1824;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(45, 149, 150, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(36, 79, 118, 0.2) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(13, 21, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .glow-input:focus {
+            box-shadow: 0 0 15px rgba(0, 194, 194, 0.25);
+            border-color: #00c2c2 !important;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl">
+        <!-- Logo Section -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-teal-400/10 border border-teal-400/20 shadow-lg shadow-teal-500/10 mb-3 overflow-hidden">
+                <img src="{% static 'logoSystem.png' %}" alt="DentPro Logo" class="w-full h-full object-cover">
+            </div>
+            <h1 class="text-2xl font-black text-white tracking-tight">DentPro</h1>
+            <p class="text-xs font-bold text-slate-400 mt-1">نظام الإدارة الذكي المتكامل للعيادات الطبية</p>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="glass-card rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-xl font-bold text-white mb-6 text-center">إنشاء حساب عيادة جديد</h2>
+
+            {% if form.errors %}
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 mb-6 text-xs font-bold space-y-1">
+                <div class="flex gap-2 items-center">
+                    <i class="fa-solid fa-circle-exclamation text-base"></i>
+                    <span>يرجى تصحيح الأخطاء التالية:</span>
+                </div>
+                <ul class="list-disc pr-6 mt-1">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'accounts_web:clinic-register' %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Section 1: Clinic Details -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-teal-400 border-b border-slate-800/60 pb-2"><i class="fa-solid fa-clinic-medical ml-1.5"></i> بيانات العيادة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="id_clinic_name" class="block text-xs font-bold text-slate-400 mb-2">اسم العيادة *</label>
+                            <input type="text" name="clinic_name" id="id_clinic_name" required value="{{ form.clinic_name.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="مثال: عيادة د. حسين لطب الأسنان">
+                        </div>
+                        <div>
+                            <label for="id_clinic_phone" class="block text-xs font-bold text-slate-400 mb-2">رقم هاتف العيادة (اختياري)</label>
+                            <input type="text" name="clinic_phone" id="id_clinic_phone" value="{{ form.clinic_phone.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="7xxxxxxxx">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="id_clinic_email" class="block text-xs font-bold text-slate-400 mb-2">البريد الإلكتروني للعيادة (اختياري)</label>
+                            <input type="email" name="clinic_email" id="id_clinic_email" value="{{ form.clinic_email.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="clinic@dentpro.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Manager Credentials -->
+                <div class="space-y-4 pt-2">
+                    <h3 class="text-sm font-bold text-teal-400 border-b border-slate-800/60 pb-2"><i class="fa-solid fa-user-tie ml-1.5"></i> بيانات مدير العيادة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="id_manager_first_name" class="block text-xs font-bold text-slate-400 mb-2">الاسم الأول والثاني والجد للمدير *</label>
+                            <input type="text" name="manager_first_name" id="id_manager_first_name" required value="{{ form.manager_first_name.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="الاسم الأول والثاني والثالث">
+                        </div>
+                        <div>
+                            <label for="id_manager_last_name" class="block text-xs font-bold text-slate-400 mb-2">اسم العائلة للمدير *</label>
+                            <input type="text" name="manager_last_name" id="id_manager_last_name" required value="{{ form.manager_last_name.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="اسم العائلة">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="id_manager_email" class="block text-xs font-bold text-slate-400 mb-2">البريد الإلكتروني للمدير (اسم المستخدم لتسجيل الدخول) *</label>
+                            <input type="email" name="manager_email" id="id_manager_email" required value="{{ form.manager_email.value|default:'' }}"
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="name@example.com">
+                        </div>
+                        <div>
+                            <label for="id_password" class="block text-xs font-bold text-slate-400 mb-2">كلمة المرور *</label>
+                            <input type="password" name="password" id="id_password" required
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label for="id_password_confirm" class="block text-xs font-bold text-slate-400 mb-2">تأكيد كلمة المرور *</label>
+                            <input type="password" name="password_confirm" id="id_password_confirm" required
+                                class="glow-input w-full px-4 py-2.5 bg-[#080d19]/60 border border-slate-800 rounded-2xl text-white placeholder-slate-500 text-sm focus:outline-none transition-all font-bold"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                    class="w-full bg-teal-400 hover:bg-teal-300 text-slate-950 font-extrabold py-3 px-6 rounded-2xl shadow-lg shadow-teal-500/10 hover:shadow-teal-500/20 transform hover:-translate-y-0.5 transition-all text-sm mt-4 flex items-center justify-center gap-2 border-none">
+                    <span>إنشاء الحساب وبدء الاستخدام</span> <i class="fa-solid fa-arrow-left text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-xs">
+                <span class="text-slate-400">لديك حساب بالفعل؟</span>
+                <a href="{% url 'accounts_web:login' %}" class="font-bold text-teal-400 hover:text-teal-300 transition-colors">تسجيل الدخول هنا</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-[10px] font-bold text-slate-500 mt-8">
+            DentPro © 2026. جميع الحقوق محفوظة لعيادتك الطبية.
+        </p>
+    </div>
+</body>
+
+</html>

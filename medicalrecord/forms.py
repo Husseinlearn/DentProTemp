@@ -9,6 +9,12 @@ class MedicalRecordForm(forms.ModelForm):
             'patient': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user and user.clinic:
+            self.fields['patient'].queryset = self.fields['patient'].queryset.filter(clinic=user.clinic, is_archived=False)
+
 class AttachmentForm(forms.ModelForm):
     class Meta:
         model = Attachment
@@ -19,6 +25,12 @@ class AttachmentForm(forms.ModelForm):
             'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user and user.clinic:
+            self.fields['medical_record'].queryset = self.fields['medical_record'].queryset.filter(patient__clinic=user.clinic)
 
 class PrescribedMedicationForm(forms.ModelForm):
     class Meta:

@@ -14,7 +14,7 @@ class AppointmentListView(LoginRequiredMixin, ListView):
     context_object_name = 'appointments'
     
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(clinic=self.request.user.clinic)
         
         # 1. Search Filter
         search_query = self.request.GET.get('search', '').strip()
@@ -53,7 +53,7 @@ class AppointmentListView(LoginRequiredMixin, ListView):
         today = timezone.now().date()
 
         # Calculate counts across all categories
-        base_queryset = Appointment.objects.all()
+        base_queryset = Appointment.objects.filter(clinic=self.request.user.clinic)
         context['count_all'] = base_queryset.count()
         context['count_today'] = base_queryset.filter(date=today).count()
         context['count_confirmed'] = base_queryset.filter(status__in=['confirmed', 'مؤكد']).count()
@@ -75,9 +75,8 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
     
     def get_object(self, queryset=None):
         pk = self.kwargs.get('pk')
-        if pk:
-            return Appointment.objects.get(id=pk)
-        return super().get_object(queryset)
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Appointment, id=pk, clinic=self.request.user.clinic)
 
 class AppointmentCreateView(LoginRequiredMixin, CreateView):
     model = Appointment
@@ -85,7 +84,13 @@ class AppointmentCreateView(LoginRequiredMixin, CreateView):
     template_name = 'appointment/appointment_form.html'
     success_url = reverse_lazy('appointments_web:appointment-list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
+        form.instance.clinic = self.request.user.clinic
         messages.success(self.request, "Appointment created successfully.")
         return super().form_valid(form)
 
@@ -97,8 +102,14 @@ class AppointmentUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('appointments_web:appointment-detail', kwargs={'pk': self.object.id})
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_object(self, queryset=None):
-        return Appointment.objects.get(id=self.kwargs.get('pk'))
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Appointment, id=self.kwargs.get('pk'), clinic=self.request.user.clinic)
 
     def form_valid(self, form):
         messages.success(self.request, "Appointment updated successfully.")
@@ -110,7 +121,8 @@ class AppointmentDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('appointments_web:appointment-list')
 
     def get_object(self, queryset=None):
-        return Appointment.objects.get(id=self.kwargs.get('pk'))
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Appointment, id=self.kwargs.get('pk'), clinic=self.request.user.clinic)
 
     def form_valid(self, form):
         messages.success(self.request, "Appointment deleted successfully.")
