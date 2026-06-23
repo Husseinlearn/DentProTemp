@@ -27,19 +27,25 @@ class DoctorListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        clinic = self.request.user.clinic
         
-        # Stats from DB
-        doctors_db = CustomUser.objects.filter(user_type='doctor', is_archived=False)
-        receptionists_db = CustomUser.objects.filter(user_type='receptionist', is_archived=False)
-        assistants_db = CustomUser.objects.filter(user_type='assistant', is_archived=False)
-        managers_db = CustomUser.objects.filter(user_type='manager', is_archived=False)
+        # الإحصائيات الحقيقية المفلترة بحسب العيادة الحالية فقط
+        doctors_db = CustomUser.objects.filter(clinic=clinic, user_type='doctor', is_archived=False)
+        receptionists_db = CustomUser.objects.filter(clinic=clinic, user_type='receptionist', is_archived=False)
+        assistants_db = CustomUser.objects.filter(clinic=clinic, user_type='assistant', is_archived=False)
+        managers_db = CustomUser.objects.filter(clinic=clinic, user_type='manager', is_archived=False)
         
         context['doctors_count'] = doctors_db.count()
         context['receptionists_count'] = receptionists_db.count()
         context['assistants_count'] = assistants_db.count()
-        context['total_team_count'] = doctors_db.count() + receptionists_db.count() + assistants_db.count() + managers_db.count()
+        context['total_team_count'] = (
+            doctors_db.count() + 
+            receptionists_db.count() + 
+            assistants_db.count() + 
+            managers_db.count()
+        )
         
-        # Build enriched list of real staff members
+        # بناء قائمة الموظفين الحقيقيين المسجلين في العيادة
         enriched_staff = []
         for user in self.get_queryset():
             phone = getattr(user, 'profile', None).phone if (hasattr(user, 'profile') and user.profile) else "غير محدد"
@@ -47,7 +53,15 @@ class DoctorListView(LoginRequiredMixin, ListView):
             
             specialty = ""
             if user.user_type == 'doctor':
-                doc_profile = user.doctor_profile.first() if hasattr(user, 'doctor_profile') else None
+                doc_profile = None
+                if hasattr(user, 'doctor_profile'):
+                    try:
+                        doc_profile = user.doctor_profile.first()
+                    except AttributeError:
+                        doc_profile = user.doctor_profile
+                elif hasattr(user, 'doctor'):
+                    doc_profile = user.doctor
+                
                 specialty = doc_profile.specialization if doc_profile else "طب الأسنان العام"
             elif user.user_type == 'receptionist':
                 specialty = "موظف استقبال"
@@ -64,9 +78,9 @@ class DoctorListView(LoginRequiredMixin, ListView):
                 
             is_active = user.is_active
             
-            # Simulated stats for realism
-            patients_count = 100 + (hash(user.username) % 150) if user.user_type == 'doctor' else None
-            appointments_count = 300 + (hash(user.username) % 500) if user.user_type == 'doctor' else None
+            # إحصائيات حقيقية مبدئية (يمكنك تطويرها لاحقاً لربطها بجدول الحالات والمواعيد)
+            patients_count = 0
+            appointments_count = 0
             
             enriched_staff.append({
                 'id': user.pk,
@@ -84,107 +98,8 @@ class DoctorListView(LoginRequiredMixin, ListView):
                 'appointments_count': appointments_count,
             })
             
-        # Guarantee full list of 6 members to match the user's gorgeous reference layout if the DB is sparse
-        if len(enriched_staff) < 4:
-            mock_staff = [
-                {
-                    'id': 'mock1',
-                    'pk': 'mock1',
-                    'full_name': 'د. محمد أحمد العلي',
-                    'user_type': 'doctor',
-                    'user_type_display': 'طبيب',
-                    'specialty': 'طب الأسنان العام',
-                    'phone': '0501234567',
-                    'email': 'dr.mohamed@dentpro.com',
-                    'joined_date': '15-01-2022',
-                    'is_active': True,
-                    'initials': 'م أ',
-                    'patients_count': 245,
-                    'appointments_count': 856,
-                },
-                {
-                    'id': 'mock2',
-                    'pk': 'mock2',
-                    'full_name': 'د. سارة خالد السالم',
-                    'user_type': 'doctor',
-                    'user_type_display': 'طبيب',
-                    'specialty': 'تقويم الأسنان',
-                    'phone': '0559876543',
-                    'email': 'dr.sara@dentpro.com',
-                    'joined_date': '20-06-2022',
-                    'is_active': True,
-                    'initials': 'س س',
-                    'patients_count': 189,
-                    'appointments_count': 634,
-                },
-                {
-                    'id': 'mock3',
-                    'pk': 'mock3',
-                    'full_name': 'د. عبدالله محمد الشمري',
-                    'user_type': 'doctor',
-                    'user_type_display': 'طبيب',
-                    'specialty': 'جراحة الفم والأسنان',
-                    'phone': '0541112233',
-                    'email': 'dr.abdullah@dentpro.com',
-                    'joined_date': '10-03-2023',
-                    'is_active': True,
-                    'initials': 'ع ش',
-                    'patients_count': 112,
-                    'appointments_count': 298,
-                },
-                {
-                    'id': 'mock4',
-                    'pk': 'mock4',
-                    'full_name': 'نورة السعيد',
-                    'user_type': 'receptionist',
-                    'user_type_display': 'موظف استقبال',
-                    'specialty': 'موظف استقبال',
-                    'phone': '0509988776',
-                    'email': 'noura@dentpro.com',
-                    'joined_date': '05-02-2023',
-                    'is_active': True,
-                    'initials': 'ن س',
-                    'patients_count': None,
-                    'appointments_count': None,
-                },
-                {
-                    'id': 'mock5',
-                    'pk': 'mock5',
-                    'full_name': 'فهد المطيري',
-                    'user_type': 'assistant',
-                    'user_type_display': 'مساعد',
-                    'specialty': 'مساعد طبيب',
-                    'phone': '0554433221',
-                    'email': 'fahad@dentpro.com',
-                    'joined_date': '18-08-2023',
-                    'is_active': True,
-                    'initials': 'ف م',
-                    'patients_count': None,
-                    'appointments_count': None,
-                },
-                {
-                    'id': 'mock6',
-                    'pk': 'mock6',
-                    'full_name': 'مريم الحربي',
-                    'user_type': 'assistant',
-                    'user_type_display': 'مساعد',
-                    'specialty': 'مساعد طبيب',
-                    'phone': '0566677889',
-                    'email': 'maryam@dentpro.com',
-                    'joined_date': '25-11-2023',
-                    'is_active': False,
-                    'initials': 'م ح',
-                    'patients_count': None,
-                    'appointments_count': None,
-                }
-            ]
-            context['staff_list'] = mock_staff
-            context['doctors_count'] = 3
-            context['receptionists_count'] = 1
-            context['assistants_count'] = 2
-            context['total_team_count'] = 6
-        else:
-            context['staff_list'] = enriched_staff
+        # إرسال القائمة الحقيقية مباشرة بدون أي استبدال ببيانات وهمية
+        context['staff_list'] = enriched_staff
             
         return context
 
@@ -203,11 +118,8 @@ class DoctorDetailView(LoginRequiredMixin, DetailView):
         context['user'] = user
         context['profile'] = getattr(user, 'profile', None)
         
-        # If doctor, fetch doctor profile
         doc_profile = user.doctor_profile.first() if hasattr(user, 'doctor_profile') else None
         context['doctor_profile'] = doc_profile
-        
-        # Backward compatibility with template variables:
         context['doctor'] = doc_profile if doc_profile else user
         return context
 
@@ -219,7 +131,7 @@ class DoctorCreateView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         cleaned_data = form.cleaned_data
         
-        # Create User
+        # إنشاء المستخدم
         user = CustomUser.objects.create_user(
             username=cleaned_data['username'],
             email=cleaned_data['email'],
@@ -231,7 +143,7 @@ class DoctorCreateView(LoginRequiredMixin, FormView):
         user.set_password(cleaned_data['password'])
         user.save()
         
-        # Create UserProfile
+        # إنشاء الملف الشخصي
         UserProfile.objects.create(
             user=user,
             phone=cleaned_data['phone'],
@@ -240,7 +152,7 @@ class DoctorCreateView(LoginRequiredMixin, FormView):
             address=cleaned_data.get('address')
         )
         
-        # Create Doctor Profile if doctor selected
+        # إنشاء ملف طبيب مخصص إذا كان نوع الحساب طبيباً
         if cleaned_data['user_type'] == 'doctor':
             Doctor.objects.create(
                 user=user,
@@ -298,7 +210,6 @@ class DoctorUpdateView(LoginRequiredMixin, FormView):
         cleaned_data = form.cleaned_data
         user = self.user_obj
         
-        # Update User
         user.email = cleaned_data['email']
         user.first_name = cleaned_data['first_name']
         user.last_name = cleaned_data['last_name']
@@ -307,7 +218,6 @@ class DoctorUpdateView(LoginRequiredMixin, FormView):
             user.set_password(cleaned_data['password'])
         user.save()
         
-        # Update Profile
         profile, created = UserProfile.objects.get_or_create(user=user)
         profile.phone = cleaned_data['phone']
         profile.gender = cleaned_data['gender']
@@ -315,7 +225,6 @@ class DoctorUpdateView(LoginRequiredMixin, FormView):
         profile.address = cleaned_data.get('address')
         profile.save()
         
-        # Handle Doctor profile
         if cleaned_data['user_type'] == 'doctor':
             doc_profile, created = Doctor.objects.get_or_create(user=user)
             doc_profile.specialization = cleaned_data.get('specialization')
@@ -323,7 +232,6 @@ class DoctorUpdateView(LoginRequiredMixin, FormView):
             doc_profile.revenue_share = cleaned_data.get('revenue_share') or 0.00
             doc_profile.save()
         else:
-            # Delete doctor profile if user type was changed from doctor
             if hasattr(user, 'doctor_profile'):
                 user.doctor_profile.all().delete()
                 
@@ -382,7 +290,6 @@ class ProfileView(LoginRequiredMixin, FormView):
         cleaned_data = form.cleaned_data
         user = self.request.user
         
-        # Update User details
         user.email = cleaned_data['email']
         user.first_name = cleaned_data['first_name']
         user.last_name = cleaned_data['last_name']
@@ -390,7 +297,6 @@ class ProfileView(LoginRequiredMixin, FormView):
             user.set_password(cleaned_data['password'])
         user.save()
         
-        # Update Profile
         profile, created = UserProfile.objects.get_or_create(user=user)
         profile.phone = cleaned_data['phone']
         profile.gender = cleaned_data['gender']
@@ -426,16 +332,13 @@ class ClinicRegisterView(FormView):
     def form_valid(self, form):
         cleaned_data = form.cleaned_data
         
-        # 1. Create Clinic
         clinic = Clinic.objects.create(
             name=cleaned_data['clinic_name'],
             email=cleaned_data.get('clinic_email'),
             phone=cleaned_data.get('clinic_phone')
         )
 
-        # 2. Create Manager User
         username = cleaned_data['manager_email'].split('@')[0]
-        # Ensure username uniqueness
         if CustomUser.objects.filter(username=username).exists():
             username = f"{username}_{uuid.uuid4().hex[:6]}"
             
@@ -450,14 +353,12 @@ class ClinicRegisterView(FormView):
         user.set_password(cleaned_data['password'])
         user.save()
 
-        # Create Profile
         UserProfile.objects.create(
             user=user,
             phone=cleaned_data.get('clinic_phone') or "",
             gender='male'
         )
 
-        # Log user in
         login(self.request, user)
         messages.success(self.request, "تم تسجيل العيادة وحساب مدير العيادة بنجاح!")
         return super().form_valid(form)

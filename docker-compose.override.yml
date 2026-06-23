@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
       target: dev
     command: ["/app/entrypoint.sh", "dev"]
+    ports:
+      - "8000:8000" # نفتح البورت محلياً للتطوير المباشر
     volumes:
       - .:/app:cached
       - static_volume:/app/staticfiles

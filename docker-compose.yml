@@ -8,21 +8,35 @@ services:
     restart: unless-stopped
     env_file: .env
     command: ["/app/entrypoint.sh", "gunicorn"]
-    ports:
-      - "8001:8000"
+    # حذفنا الـ ports من هنا لمنع الوصول المباشر لـ Django من خارج السيرفر
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    # استخدم فحص صحة لا يعتمد على curl (قد لا يكون مثبّتًا)
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)\" || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 20s
+    networks:
+      - dentpro_network
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: dentpro_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"        # بورت HTTP العادي للإنتاج والتجربة
+      - "443:443"      # بورت HTTPS (سنجهزه لـ AWS لاحقاً)
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d # ربط ملفات الإعدادات
+      - static_volume:/app/staticfiles    # قراءة الملفات الثابتة من الفوليوم المشترك
+      - media_volume:/app/media          # قراءة ملفات الميديا
+    depends_on:
+      - web
     networks:
       - dentpro_network
 
@@ -42,7 +56,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-    # غيّر منفذ المضيف لتفادي تعارض مع Postgres المحلي على ويندوز
     ports:
       - "5433:5432"
     networks:

@@ -24,8 +24,12 @@ else:
 PYCODE
 
 # ترحيلات وجمع ملفات ثابتة
+echo "Running migrations..."
 python manage.py migrate --noinput
-python manage.py collectstatic --noinput || true
+
+# قمنا بإزالة || true هنا لضمان الاحترافية والأمان؛ إذا فشل التجميع تتوقف الحاوية لنعلم بالخطأ فوراً
+echo "Collecting static files..."
+python manage.py collectstatic --noinput 
 
 if [ "$1" = "dev" ]; then
   echo "Starting Django development server..."

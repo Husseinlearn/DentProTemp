@@ -143,6 +143,12 @@
                         </td>
                         <td class="p-4 text-end align-middle text-emerald-400 font-black text-xs">${{ share.earnings|floatformat:2 }}</td>
                     </tr>
+                    {% empty %}
+    <tr>
+        <td colspan="5" class="p-6 text-center text-slate-500 font-bold text-xs">
+            لا توجد حصص أطباء أو بيانات مسجلة حالياً.
+        </td>
+    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -160,10 +166,11 @@
                 <div>
                     <div class="flex justify-between text-xs font-bold mb-2">
                         <span class="text-slate-300">فواتير مدفوعة بالكامل</span>
-                        <span class="text-green-400">{{ completed_procedures_count }} إجراء ({{ completed_procedures_count|add:pending_procedures_count|add:cancelled_procedures_count|default:1 }} إجمالي)</span>
+                        <span class="text-green-400">{{ completed_procedures_count }} إجراء ({{ completed_procedures_count|add:pending_procedures_count|add:cancelled_procedures_count|default:0 }} إجمالي)</span>
                     </div>
                     <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full bg-green-500 rounded-full" style="width: 75%"></div>
+                        <!-- تم تغيير النسبة لتصبح ديناميكية -->
+                        <div class="h-full bg-green-500 rounded-full" style="width: {{ completed_pct|default:0 }}%"></div>
                     </div>
                 </div>
 
@@ -174,7 +181,8 @@
                         <span class="text-orange-400">{{ pending_procedures_count }} إجراء</span>
                     </div>
                     <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full bg-orange-500 rounded-full" style="width: 20%"></div>
+                        <!-- تم تغيير النسبة لتصبح ديناميكية -->
+                        <div class="h-full bg-orange-500 rounded-full" style="width: {{ pending_pct|default:0 }}%"></div>
                     </div>
                 </div>
 
@@ -185,7 +193,8 @@
                         <span class="text-red-400">{{ cancelled_procedures_count }} إجراء</span>
                     </div>
                     <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full bg-red-500 rounded-full" style="width: 5%"></div>
+                        <!-- تم تغيير النسبة لتصبح ديناميكية -->
+                        <div class="h-full bg-red-500 rounded-full" style="width: {{ cancelled_pct|default:0 }}%"></div>
                     </div>
                 </div>
             </div>
@@ -201,7 +210,6 @@
             </p>
         </div>
     </div>
-</div>
 
 <!-- Quick Actions Panel -->
 <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 p-6 shadow-2xl mb-8">

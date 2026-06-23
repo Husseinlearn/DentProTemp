@@ -6,16 +6,16 @@ from patients.models import Patient
 from appointment.models import Appointment
 from procedures.models import Procedure, ClinicalExamItem
 from medicalrecord.models import PrescribedMedication
-from accounts.models import Doctor
+# استيراد النماذج المطلوبة لضمان مرونة الاستعلامات
+from accounts.models import Doctor, CustomUser, Clinic
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    # template_name will be selected dynamically in get_template_names
     
     def get_template_names(self):
         user = self.request.user
         role = user.user_type
         
-        # Admin preview override
+        # تخطي العرض المسبق للمشرف (Admin preview override)
         preview_role = self.request.GET.get('role')
         if preview_role in ['manager', 'doctor', 'receptionist', 'patient'] and (user.is_superuser or user.user_type in ['admin', 'manager']):
             role = preview_role
@@ -35,7 +35,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        # Current active preview role
+        # تحديد الدور النشط حالياً للعرض
         role = user.user_type
         preview_role = self.request.GET.get('role')
         if preview_role in ['manager', 'doctor', 'receptionist', 'patient'] and (user.is_superuser or user.user_type in ['admin', 'manager']):
@@ -44,12 +44,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['current_role'] = role
         context['is_admin_or_manager'] = user.is_superuser or user.user_type in ['admin', 'manager']
         
-        # Extract initials for the logged-in user to show in the header
+        # استخراج الحروف الأولى لاسم المستخدم لعرضها في الهيدر
         context['user_initials'] = f"{user.first_name[0] if user.first_name else ''}{user.last_name[0] if user.last_name else user.username[0]}"
         if not context['user_initials']:
             context['user_initials'] = "م"
             
-        # Select compilation strategy
+        # تحديد استراتيجية تجميع البيانات بحسب الصلاحية
         if role in ['manager', 'admin'] or user.is_superuser:
             self._compile_manager_data(context)
         elif role == 'doctor':
@@ -62,80 +62,102 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
     def _compile_manager_data(self, context):
-        # 1. Total active patients
-        context['total_patients'] = Patient.objects.filter(clinic=self.request.user.clinic, is_archived=False).count()
+        # التحقق من وجود العيادة للحساب الحالي، مع إرجاع أول عيادة كخيار احتياطي للمسؤولين
+        clinic = self.request.user.clinic
+        if not clinic:
+            clinic = Clinic.objects.first()
+
+        # 1. إجمالي المرضى النشطين من قاعدة البيانات للعيادة المحددة
+        context['total_patients'] = Patient.objects.filter(clinic=clinic, is_archived=False).count() if clinic else 0
         
-        # 2. Total clinical revenue (completed procedures)
-        completed_procedures = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='completed')
+        # 2. إجمالي الإيرادات الفعلية (الإجراءات المكتملة فقط)
+        if clinic:
+            completed_procedures = Procedure.objects.filter(clinical_exam__patient__clinic=clinic, status='completed')
+        else:
+            completed_procedures = Procedure.objects.none()
+            
         total_rev = completed_procedures.aggregate(sum_cost=Sum('cost'))['sum_cost'] or 0
         context['total_revenue'] = float(total_rev)
         
-        # 3. Billing snap (completed, pending, cancelled)
-        context['pending_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='pending').count()
-        context['completed_procedures_count'] = completed_procedures.count()
-        context['cancelled_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='cancelled').count()
+        # 3. توزيع الفواتير والعمليات
+        if clinic:
+            context['pending_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=clinic, status='pending').count()
+            context['completed_procedures_count'] = completed_procedures.count()
+            context['cancelled_procedures_count'] = Procedure.objects.filter(clinical_exam__patient__clinic=clinic, status='cancelled').count()
+        else:
+            context['pending_procedures_count'] = 0
+            context['completed_procedures_count'] = 0
+            context['cancelled_procedures_count'] = 0
+            
+        # حساب النسب المئوية الفعلية لتوزيع الفواتير (أشرطة التحميل)
+        total_procs = context['completed_procedures_count'] + context['pending_procedures_count'] + context['cancelled_procedures_count']
+        if total_procs > 0:
+            context['completed_pct'] = (context['completed_procedures_count'] / total_procs) * 100
+            context['pending_pct'] = (context['pending_procedures_count'] / total_procs) * 100
+            context['cancelled_pct'] = (context['cancelled_procedures_count'] / total_procs) * 100
+        else:
+            context['completed_pct'] = 0
+            context['pending_pct'] = 0
+            context['cancelled_pct'] = 0
         
-        # 4. Doctor revenue share calculations
-        doctors = Doctor.objects.filter(user__clinic=self.request.user.clinic).select_related('user').all()
+        # 4. حساب حصص الأطباء الفعلية بناءً على مستخدمي الأطباء الفعليين (بمرونة عالية)
         doctor_shares = []
-        for doc in doctors:
-            doc_procedures = Procedure.objects.filter(clinical_exam__doctor=doc, status='completed')
-            doc_rev = doc_procedures.aggregate(sum_cost=Sum('cost'))['sum_cost'] or 0
-            doc_share_pct = float(doc.revenue_share)
-            doc_earnings = float(doc_rev) * (doc_share_pct / 100.0)
+        if clinic:
+            # نستعلم عن مستخدمي الأطباء أولاً لضمان ظهورهم حتى لو لم يكتمل ملف الطبيب الفرعي في لوحة التحكم
+            doctor_users = CustomUser.objects.filter(clinic=clinic, user_type='doctor', is_archived=False)
             
-            doctor_shares.append({
-                'doctor_name': f"د. {doc.user.get_full_name() or doc.user.username}",
-                'specialization': doc.specialization or 'طب الأسنان العام',
-                'revenue': float(doc_rev),
-                'share_percent': doc_share_pct,
-                'earnings': doc_earnings,
-                'initials': f"{doc.user.first_name[0] if doc.user.first_name else ''}{doc.user.last_name[0] if doc.user.last_name else 'ط'}"
-            })
-            
-        # Populate mock data fallback if sparse for visual presentation
-        if not doctor_shares or len(doctor_shares) < 3:
-            doctor_shares = [
-                {'doctor_name': 'د. محمد أحمد العلي', 'specialization': 'طب الأسنان العام', 'revenue': 4500.0, 'share_percent': 20.0, 'earnings': 900.0, 'initials': 'م أ'},
-                {'doctor_name': 'د. سارة خالد السالم', 'specialization': 'تقويم الأسنان', 'revenue': 8200.0, 'share_percent': 30.0, 'earnings': 2460.0, 'initials': 'س س'},
-                {'doctor_name': 'د. عبدالله محمد الشمري', 'specialization': 'جراحة الفم والأسنان', 'revenue': 3800.0, 'share_percent': 25.0, 'earnings': 950.0, 'initials': 'ع ش'},
-            ]
-            context['total_revenue'] = 16500.0
-            context['total_patients'] = 124
-            context['pending_procedures_count'] = 12
-            context['completed_procedures_count'] = 45
-            context['cancelled_procedures_count'] = 3
+            for doc_user in doctor_users:
+                # محاولة جلب ملف الطبيب (Doctor) المرتبط بالمستخدم
+                doc_profile = None
+                if hasattr(doc_user, 'doctor_profile'):
+                    try:
+                        doc_profile = doc_user.doctor_profile.first()
+                    except AttributeError:
+                        doc_profile = doc_user.doctor_profile
+                elif hasattr(doc_user, 'doctor'):
+                    doc_profile = doc_user.doctor
+                
+                doc_share_pct = float(doc_profile.revenue_share) if (doc_profile and doc_profile.revenue_share) else 0.0
+                specialization = (doc_profile.specialization if doc_profile else None) or 'طب الأسنان العام'
+                
+                # حساب الإيرادات المرتبطة بهذا الطبيب
+                if doc_profile:
+                    doc_procedures = Procedure.objects.filter(clinical_exam__doctor=doc_profile, status='completed')
+                else:
+                    doc_procedures = Procedure.objects.filter(clinical_exam__doctor__user=doc_user, status='completed')
+                    
+                doc_rev = doc_procedures.aggregate(sum_cost=Sum('cost'))['sum_cost'] or 0
+                doc_earnings = float(doc_rev) * (doc_share_pct / 100.0)
+                
+                doctor_shares.append({
+                    'doctor_name': f"د. {doc_user.get_full_name() or doc_user.username}",
+                    'specialization': specialization,
+                    'revenue': float(doc_rev),
+                    'share_percent': doc_share_pct,
+                    'earnings': doc_earnings,
+                    'initials': f"{doc_user.first_name[0] if doc_user.first_name else ''}{doc_user.last_name[0] if doc_user.last_name else 'ط'}"
+                })
             
         context['doctor_shares'] = doctor_shares
-        
-        # Monthly trend data for the visual analytics chart card
-        context['monthly_growth'] = [
-            {'month': 'يناير', 'patients': 15, 'revenue': 8000},
-            {'month': 'فبراير', 'patients': 22, 'revenue': 11000},
-            {'month': 'مارس', 'patients': 30, 'revenue': 14000},
-            {'month': 'أبريل', 'patients': 28, 'revenue': 12500},
-            {'month': 'مايو', 'patients': 35, 'revenue': 16500},
-        ]
+        context['monthly_growth'] = []
         
     def _compile_doctor_data(self, context):
         user = self.request.user
         doctor = Doctor.objects.filter(user=user, user__clinic=user.clinic).first()
         
-        # Default mock metrics
-        context['procedures_completed_today'] = 4
-        context['appointments_today_count'] = 5
+        context['appointments_today'] = Appointment.objects.none()
+        context['appointments_today_count'] = 0
+        context['procedures_completed_today'] = 0
+        context['high_risk_patients'] = Patient.objects.none()
         
         if doctor:
-            # 1. Today's appointments
             today_appointments = Appointment.objects.filter(doctor=doctor, date=datetime.date.today()).select_related('patient')
             context['appointments_today'] = today_appointments
             context['appointments_today_count'] = today_appointments.count()
             
-            # 2. Teeth procedures completed today
             completed_today = Procedure.objects.filter(clinical_exam__doctor=doctor, created_at__date=datetime.date.today(), status='completed')
             context['procedures_completed_today'] = completed_today.count()
             
-            # 3. Patients with high-risk health flags (chronic diseases/allergies)
             high_risk_patients = Patient.objects.filter(
                 clinic=user.clinic
             ).filter(
@@ -143,153 +165,31 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ).distinct()[:5]
             context['high_risk_patients'] = high_risk_patients
             
-        # Fallback Mock data for Doctor dashboard if empty
-        if not doctor or not context.get('appointments_today'):
-            context['appointments_today'] = [
-                {
-                    'patient': {'full_name': 'خالد العتيبي', 'phone': '0501112222', 'gender': 'male'},
-                    'time': '09:00',
-                    'reason': 'تنظيف أسنان وعلاج لثة',
-                    'status': 'مؤكد'
-                },
-                {
-                    'patient': {'full_name': 'فاطمة الزهراني', 'phone': '0552223333', 'gender': 'female'},
-                    'time': '10:30',
-                    'reason': 'تقويم أسنان دوري',
-                    'status': 'معلق'
-                },
-                {
-                    'patient': {'full_name': 'عمر الشمري', 'phone': '0543334444', 'gender': 'male'},
-                    'time': '13:00',
-                    'reason': 'خلع ضرس عقل',
-                    'status': 'منجز'
-                },
-            ]
-            context['high_risk_patients'] = [
-                {
-                    'full_name': 'أحمد السديري',
-                    'diseases': [{'name': 'السكري', 'dental_impact': 'بطء التئام الجروح'}],
-                    'allergies': [{'name': 'بنسلين', 'allergic_reaction': 'طفح جلدي وضيق تنفس'}]
-                },
-                {
-                    'full_name': 'سميرة الشهري',
-                    'diseases': [{'name': 'ارتفاع ضغط الدم', 'dental_impact': 'تجنب أدرينالين عالي'}],
-                    'allergies': []
-                }
-            ]
-            
     def _compile_receptionist_data(self, context):
-        # 1. Today's appointments queue
         today_appointments = Appointment.objects.filter(clinic=self.request.user.clinic, date=datetime.date.today()).select_related('patient', 'doctor__user').order_by('time')
         context['queue_today'] = today_appointments
         context['queue_today_count'] = today_appointments.count()
         
-        # 2. Check-in status / pending payments
         pending_payments = Procedure.objects.filter(clinical_exam__patient__clinic=self.request.user.clinic, status='pending').select_related('clinical_exam__patient', 'clinical_exam__doctor__user')[:5]
         context['pending_payments'] = pending_payments
         
-        # Fallback Mock data for Receptionist dashboard if empty
-        if not today_appointments or today_appointments.count() == 0:
-            context['queue_today'] = [
-                {
-                    'patient': {'full_name': 'ياسر القحطاني', 'phone': '0567778888'},
-                    'doctor': {'user': {'get_full_name': 'د. محمد أحمد العلي'}},
-                    'time': '09:00',
-                    'status': 'مؤكد',
-                    'reason': 'فحص طبي عام'
-                },
-                {
-                    'patient': {'full_name': 'نورة العتيبي', 'phone': '0539990000'},
-                    'doctor': {'user': {'get_full_name': 'د. سارة خالد السالم'}},
-                    'time': '10:00',
-                    'status': 'معلق',
-                    'reason': 'استشارة تقويم'
-                },
-                {
-                    'patient': {'full_name': 'سلطان المطيري', 'phone': '0502224444'},
-                    'doctor': {'user': {'get_full_name': 'د. عبدالله محمد الشمري'}},
-                    'time': '11:30',
-                    'status': 'ملغي',
-                    'reason': 'حشو عصب'
-                }
-            ]
-            context['queue_today_count'] = 3
-            context['pending_payments'] = [
-                {
-                    'clinical_exam': {
-                        'patient': {'full_name': 'خالد الحربي'},
-                        'doctor': {'user': {'get_full_name': 'د. محمد أحمد العلي'}}
-                    },
-                    'name': 'تنظيف أسنان وتبييض',
-                    'cost': 450.00
-                },
-                {
-                    'clinical_exam': {
-                        'patient': {'full_name': 'مريم السليم'},
-                        'doctor': {'user': {'get_full_name': 'د. سارة خالد السالم'}}
-                    },
-                    'name': 'تركيب زرعة سنية',
-                    'cost': 1200.00
-                }
-            ]
-            
     def _compile_patient_data(self, context):
         user = self.request.user
         patient = Patient.objects.filter(email=user.email, clinic=user.clinic).first()
         
+        context['upcoming_appointments'] = Appointment.objects.none()
+        context['my_treatments'] = ClinicalExamItem.objects.none()
+        context['my_prescriptions'] = PrescribedMedication.objects.none()
+        
         if patient:
-            # 1. Upcoming appointments
             upcoming = Appointment.objects.filter(patient=patient, date__gte=datetime.date.today()).select_related('doctor__user')
             context['upcoming_appointments'] = upcoming
             
-            # 2. Treatment history
             treatments = ClinicalExamItem.objects.filter(clinical_exam__patient=patient).select_related('procedure', 'toothcode')
             context['my_treatments'] = treatments
             
-            # 3. Prescribed medications
             prescriptions = PrescribedMedication.objects.filter(clinical_exam__patient=patient).select_related('medication', 'prescribed_by__user')
             context['my_prescriptions'] = prescriptions
-            
-        # Fallback Mock data for Patient Dashboard if empty/no profile
-        if not patient or not context.get('upcoming_appointments'):
-            context['upcoming_appointments'] = [
-                {
-                    'doctor': {'user': {'get_full_name': 'د. سارة خالد السالم'}},
-                    'date': datetime.date.today() + datetime.timedelta(days=3),
-                    'time': '10:30',
-                    'reason': 'شد تقويم الأسنان المجدول'
-                }
-            ]
-            context['my_treatments'] = [
-                {
-                    'toothcode': {'tooth_number': '14', 'tooth_type': 'permanent'},
-                    'procedure': {'name': 'حشو تجميلي سن أمامي'},
-                    'notes': 'تم التنفيذ بنجاح ومطابقة لون السن الطبيعي'
-                },
-                {
-                    'toothcode': {'tooth_number': '36', 'tooth_type': 'permanent'},
-                    'procedure': {'name': 'حشو عصب وتاج بورسلين'},
-                    'notes': 'تركيب تاج حماية دائم للضرس السفلي'
-                }
-            ]
-            context['my_prescriptions'] = [
-                {
-                    'medication': {'name': 'Amoxicillin 500mg'},
-                    'times_per_day': '3 مرات يومياً',
-                    'dose_unit': 'كبسولة بعد الأكل',
-                    'number_of_days': '5 أيام',
-                    'prescribed_by': {'user': {'get_full_name': 'د. محمد أحمد العلي'}},
-                    'notes': 'الالتزام الكامل بالجرعات الموصوفة وتجنب تخطيها'
-                },
-                {
-                    'medication': {'name': 'Ibuprofen 400mg'},
-                    'times_per_day': 'عند الحاجة',
-                    'dose_unit': 'قرص بعد الأكل لتسكين الألم',
-                    'number_of_days': '3 أيام',
-                    'prescribed_by': {'user': {'get_full_name': 'د. محمد أحمد العلي'}},
-                    'notes': 'يؤخذ لتخفيف التورم والألم عند الضرورة فقط'
-                }
-            ]
 
 
 class SearchView(LoginRequiredMixin, ListView):
@@ -324,4 +224,3 @@ class SearchView(LoginRequiredMixin, ListView):
             context['appointments'] = Appointment.objects.none()
             
         return context
-
