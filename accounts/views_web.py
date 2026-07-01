@@ -368,7 +368,7 @@ class ClinicSettingsView(LoginRequiredMixin, UpdateView):
     model = Clinic
     form_class = ClinicSettingsForm
     template_name = 'accounts/clinic_settings.html'
-    success_url = reverse_lazy('core_web:dashboard')
+    success_url = reverse_lazy('accounts_web:clinic-settings')
 
     def get_object(self, queryset=None):
         if self.request.user.is_superuser or self.request.user.user_type == 'manager':
@@ -376,6 +376,64 @@ class ClinicSettingsView(LoginRequiredMixin, UpdateView):
                 return self.request.user.clinic
         from django.http import Http404
         raise Http404("غير مسموح لك بالوصول لإعدادات هذه العيادة.")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        clinic = self.request.user.clinic
+        if clinic:
+            # Fetch all staff members belonging to the current clinic
+            staff_list = CustomUser.objects.filter(
+                clinic=clinic,
+                user_type__in=['doctor', 'receptionist', 'assistant', 'manager', 'admin'],
+                is_archived=False
+            )
+            
+            # Enrich staff list data (similar to DoctorListView)
+            enriched_staff = []
+            for user in staff_list:
+                phone = getattr(user, 'profile', None).phone if (hasattr(user, 'profile') and user.profile) else "غير محدد"
+                joined_date = user.date_joined.strftime('%d-%m-%Y') if user.date_joined else "15-01-2022"
+                
+                specialty = ""
+                if user.user_type == 'doctor':
+                    doc_profile = None
+                    if hasattr(user, 'doctor_profile'):
+                        try:
+                            doc_profile = user.doctor_profile.first()
+                        except AttributeError:
+                            doc_profile = user.doctor_profile
+                    elif hasattr(user, 'doctor'):
+                        doc_profile = user.doctor
+                    
+                    specialty = doc_profile.specialization if doc_profile else "طب الأسنان العام"
+                elif user.user_type == 'receptionist':
+                    specialty = "موظف استقبال"
+                elif user.user_type == 'assistant':
+                    specialty = "مساعد طبيب"
+                elif user.user_type == 'manager':
+                    specialty = "مدير العيادة"
+                elif user.user_type == 'admin':
+                    specialty = "مسؤول النظام"
+                    
+                initials = f"{user.first_name[0] if user.first_name else ''}{user.last_name[0] if user.last_name else user.username[0]}"
+                if not initials:
+                    initials = "ع"
+                    
+                enriched_staff.append({
+                    'id': user.pk,
+                    'pk': user.pk,
+                    'full_name': user.get_full_name() or user.username,
+                    'user_type': user.user_type,
+                    'user_type_display': 'طبيب' if user.user_type == 'doctor' else 'موظف استقبال' if user.user_type == 'receptionist' else 'مساعد' if user.user_type == 'assistant' else 'مدير' if user.user_type == 'manager' else 'مسؤول',
+                    'specialty': specialty,
+                    'phone': phone,
+                    'email': user.email,
+                    'joined_date': joined_date,
+                    'is_active': user.is_active,
+                    'initials': initials,
+                })
+            context['staff_list'] = enriched_staff
+        return context
 
     def form_valid(self, form):
         messages.success(self.request, "تم تحديث إعدادات العيادة بنجاح.")

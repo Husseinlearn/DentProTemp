@@ -190,8 +190,8 @@ STATICFILES_DIRS = [
 # الإعداد الذكي: يعمل في السيرفر ولا يزعجك محلياً
 if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# MEDIA_URL = "/media/"
-# MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Health endpoint بسيط
 from django.urls import path

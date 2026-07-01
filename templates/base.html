@@ -217,22 +217,53 @@
         .table-hover tbody tr:hover {
             background-color: #f8fafc;
         }
+
+        /* Mobile Sidebar Sliding styling */
+        @media (max-width: 767px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -270px; /* Hide to the right */
+                bottom: 0;
+                z-index: 50;
+                display: flex !important;
+                transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.5) !important;
+            }
+            .sidebar.show {
+                right: 0;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body class="flex h-screen overflow-hidden text-slate-200">
     <!-- Sidebar -->
-    <aside class="sidebar w-64 flex-shrink-0 hidden md:flex flex-col shadow-2xl z-20 transition-all duration-300 border-l border-slate-900">
+    <aside id="sidebar" class="sidebar w-64 flex-shrink-0 hidden md:flex flex-col shadow-2xl z-20 transition-all duration-300 border-l border-slate-900">
         <!-- Brand / Header Section -->
         <div class="h-20 flex items-center justify-between px-6 border-b border-slate-900/60 mb-2">
             <div class="flex items-center gap-3">
-                <img src="{% static 'logoSystem.png' %}" alt="DentPro Logo" class="w-11 h-11 object-contain rounded-xl shadow-lg shadow-teal-500/10 transition-transform hover:scale-105 duration-300">
+                {% if request.user.is_authenticated and request.user.clinic.logo %}
+                    <img src="{{ request.user.clinic.logo.url }}" alt="{{ request.user.clinic.name }}" class="w-11 h-11 object-contain rounded-xl shadow-lg shadow-teal-500/10 transition-transform hover:scale-105 duration-300">
+                {% else %}
+                    <img src="{% static 'logoSystem.png' %}" alt="DentPro Logo" class="w-11 h-11 object-contain rounded-xl shadow-lg shadow-teal-500/10 transition-transform hover:scale-105 duration-300">
+                {% endif %}
                 <div class="flex flex-col">
-                    <span class="text-white text-lg font-extrabold tracking-wide">DentPro</span>
+                    <span class="text-white text-lg font-extrabold tracking-wide">
+                        {% if request.user.is_authenticated and request.user.clinic %}
+                            {{ request.user.clinic.name }}
+                        {% else %}
+                            DentPro
+                        {% endif %}
+                    </span>
                     <span class="text-[10px] text-slate-400 font-semibold mt-0.5">إدارة العيادة</span>
                 </div>
             </div>
+            <!-- Mobile Close Button -->
+            <button id="sidebar-close" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
 
         <!-- Scrollable Navigation Menu -->
@@ -273,9 +304,9 @@
                 <span>الأطباء والموظفين</span>
             </a>
             
-            <a href="#"
-                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold">
-                <i class="fa-regular fa-shield text-base w-6 text-center"></i>
+            <a href="{% url 'accounts_web:clinic-settings' %}?tab=permissions"
+                class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-sm font-semibold {% if 'clinic/settings' in request.path and 'tab=permissions' in request.META.QUERY_STRING %}active{% endif %}">
+                <i class="fa-solid fa-shield-halved text-base w-6 text-center"></i>
                 <span>الصلاحيات</span>
             </a>
             
@@ -316,12 +347,15 @@
         </div>
     </aside>
 
+    <!-- Sidebar Backdrop for Mobile -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden"></div>
+
     <!-- Main Content wrapper -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#060b13]">
         <!-- Top Header -->
         <header class="h-16 bg-[#060b13] border-b border-slate-800/60 flex items-center justify-between px-6 z-10">
             <div class="flex items-center">
-                <button class="md:hidden text-slate-400 hover:text-slate-200 focus:outline-none">
+                <button id="sidebar-toggle" class="md:hidden text-slate-400 hover:text-slate-200 focus:outline-none" aria-label="عرض القائمة الجانبية">
                     <i class="fa-solid fa-bars text-xl"></i>
                 </button>
                 <form action="{% url 'core_web:search' %}" method="get" class="hidden md:flex relative ms-4">
@@ -421,6 +455,39 @@
                 document.documentElement.setAttribute('data-theme', 'light');
                 localStorage.setItem('color-theme', 'light');
             }
+        });
+
+        // Mobile Sidebar Toggling Logic
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarClose = document.getElementById('sidebar-close');
+        const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+
+        if (sidebarToggle && sidebar && sidebarBackdrop) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.add('show');
+                sidebarBackdrop.classList.remove('hidden');
+            });
+        }
+
+        function closeMobileSidebar() {
+            if (sidebar && sidebarBackdrop) {
+                sidebar.classList.remove('show');
+                sidebarBackdrop.classList.add('hidden');
+            }
+        }
+
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', closeMobileSidebar);
+        }
+
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+        }
+
+        // Close mobile sidebar on link clicks
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', closeMobileSidebar);
         });
     </script>
     {% block extra_js %}{% endblock %}

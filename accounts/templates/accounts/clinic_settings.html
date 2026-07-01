@@ -41,6 +41,9 @@
         display: block !important;
         font-size: 0.875rem;
     }
+    .settings-tab-border {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
 </style>
 {% endblock %}
 
@@ -52,24 +55,43 @@
     </a>
 </div>
 
-<div class="max-w-2xl mx-auto">
-    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden relative p-8 shadow-2xl">
+<div class="max-w-5xl mx-auto">
+    <!-- settings header card -->
+    <div class="bg-[#0d1527] rounded-3xl border border-slate-800/80 overflow-hidden relative p-8 shadow-2xl mb-6">
         <div class="absolute top-0 start-0 w-full h-1 bg-gradient-to-l from-teal-400 to-indigo-500"></div>
 
-        <div class="text-center mb-8">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-start">
             {% if object.logo %}
-            <div class="w-24 h-24 rounded-3xl overflow-hidden border border-slate-800 mx-auto mb-4 bg-slate-900/40 p-2">
+            <div class="w-24 h-24 rounded-3xl overflow-hidden border border-slate-800 bg-slate-900/40 p-2 flex-shrink-0">
                 <img src="{{ object.logo.url }}" alt="Clinic Logo" class="w-full h-full object-contain">
             </div>
             {% else %}
-            <div class="w-20 h-20 rounded-3xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-black text-3xl border border-teal-500/10 shadow-inner select-none mx-auto mb-4">
+            <div class="w-24 h-24 rounded-3xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-black text-4xl border border-teal-500/10 shadow-inner select-none flex-shrink-0">
                 <i class="fa-solid fa-clinic-medical"></i>
             </div>
             {% endif %}
-            <h2 class="text-2xl font-black text-white">إعدادات ملف العيادة</h2>
-            <p class="text-xs text-slate-400 mt-2 font-bold">تحديث معلومات وهوية العيادة الخاصة بك، وتعديل الشعار ومعلومات الاتصال.</p>
+            <div class="flex-1">
+                <h2 class="text-2xl font-black text-white">إعدادات ملف العيادة والنظام</h2>
+                <p class="text-xs text-slate-400 mt-2 font-bold max-w-xl leading-relaxed">قم بتعديل بيانات وهوية العيادة، إدارة طاقم العمل وتوزيع أدوارهم، ومراجعة جدول الصلاحيات الخاص بالنظام.</p>
+            </div>
         </div>
+        
+        <!-- Tabs Row Selector -->
+        <div class="flex items-center gap-1 mt-8 settings-tab-border overflow-x-auto">
+            <button type="button" onclick="switchTab('info')" id="tab-btn-info" class="tab-btn px-6 py-3.5 font-bold border-b-2 text-sm transition-all border-teal-400 text-teal-400 flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-circle-info text-xs"></i> بيانات العيادة
+            </button>
+            <button type="button" onclick="switchTab('staff')" id="tab-btn-staff" class="tab-btn px-6 py-3.5 font-bold border-b-2 text-sm transition-all border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-users text-xs"></i> طاقم العمل
+            </button>
+            <button type="button" onclick="switchTab('permissions')" id="tab-btn-permissions" class="tab-btn px-6 py-3.5 font-bold border-b-2 text-sm transition-all border-transparent text-slate-400 hover:text-white flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-shield-halved text-xs"></i> جدول الصلاحيات
+            </button>
+        </div>
+    </div>
 
+    <!-- TAB 1: Clinic Information -->
+    <div id="tab-content-info" class="tab-content bg-[#0d1527] rounded-3xl border border-slate-800/80 p-8 shadow-2xl">
         <form method="post" enctype="multipart/form-data" class="space-y-6">
             {% csrf_token %}
 
@@ -80,9 +102,8 @@
             </div>
             {% endif %}
 
-            <!-- Clinic Profile details -->
             <div class="space-y-5">
-                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-circle-info text-teal-400 ml-1.5"></i> بيانات ومعلومات العيادة</h3>
+                <h3 class="font-bold text-white text-sm border-b border-slate-800/40 pb-2 mb-4"><i class="fa-solid fa-pen-to-square text-teal-400 ml-1.5"></i> تعديل بيانات الهوية والاتصال</h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
@@ -124,5 +145,212 @@
             </div>
         </form>
     </div>
+
+    <!-- TAB 2: Staff Management -->
+    <div id="tab-content-staff" class="tab-content hidden bg-[#0d1527] rounded-3xl border border-slate-800/80 p-8 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-white text-base"><i class="fa-solid fa-users text-teal-400 ml-1.5"></i> كادر عمل العيادة</h3>
+            <a href="{% url 'accounts_web:doctor-create' %}" class="btn bg-teal-400 text-slate-950 hover:bg-teal-300 font-bold px-4 py-2 text-xs rounded-xl flex items-center gap-2 border-none">
+                <i class="fa-solid fa-plus text-[10px]"></i> إضافة موظف جديد
+            </a>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800/60 bg-[#080d19]/30">
+            <table class="w-full text-start border-collapse">
+                <thead>
+                    <tr class="bg-[#080d19]/80 text-slate-400 text-xs border-b border-slate-800/60 font-bold">
+                        <th class="p-4 text-start font-black">الموظف</th>
+                        <th class="p-4 text-center font-black">الدور / الصلاحية</th>
+                        <th class="p-4 text-center font-black">رقم الهاتف</th>
+                        <th class="p-4 text-center font-black">البريد الإلكتروني</th>
+                        <th class="p-4 text-center font-black">الحالة</th>
+                        <th class="p-4 text-end font-black">الخيارات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40 text-sm">
+                    {% for staff in staff_list %}
+                    <tr class="hover:bg-[#080d19]/40 transition-all font-bold">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/15 flex items-center justify-center font-extrabold text-xs shadow-inner">
+                                    {{ staff.initials }}
+                                </div>
+                                <div>
+                                    <span class="text-white text-xs block">{{ staff.full_name }}</span>
+                                    <span class="text-[10px] text-slate-500 mt-1 block font-semibold">{{ staff.specialty }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center align-middle">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-teal-500/10 text-teal-400 border border-teal-500/10">
+                                {% if staff.user_type == 'doctor' %}
+                                <i class="fa-solid fa-stethoscope text-[9px]"></i> طبيب
+                                {% elif staff.user_type == 'receptionist' %}
+                                <i class="fa-solid fa-user-tie text-[9px]"></i> موظف استقبال
+                                {% elif staff.user_type == 'assistant' %}
+                                <i class="fa-solid fa-user-nurse text-[9px]"></i> مساعد طبيب
+                                {% elif staff.user_type == 'manager' %}
+                                <i class="fa-solid fa-shield text-[9px]"></i> مدير العيادة
+                                {% else %}
+                                <i class="fa-solid fa-user-gear text-[9px]"></i> مسؤول
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center align-middle text-slate-300 font-medium text-xs">{{ staff.phone }}</td>
+                        <td class="p-4 text-center align-middle text-slate-400 font-medium text-xs">{{ staff.email }}</td>
+                        <td class="p-4 text-center align-middle">
+                            {% if staff.is_active %}
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> نشط
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-500 border border-slate-700/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> غير نشط
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-end align-middle">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a href="{% url 'accounts_web:doctor-update' staff.pk %}"
+                                    class="w-7 h-7 rounded-lg bg-[#080d19] hover:bg-teal-500 hover:text-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 transition-all shadow-sm"
+                                    title="تعديل">
+                                    <i class="fa-solid fa-pen text-[10px]"></i>
+                                </a>
+                                <a href="{% url 'accounts_web:doctor-delete' staff.pk %}"
+                                    class="w-7 h-7 rounded-lg bg-[#080d19] hover:bg-red-500 hover:text-white border border-slate-800 flex items-center justify-center text-slate-400 transition-all shadow-sm"
+                                    title="حذف">
+                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-500 font-bold text-sm">
+                            لم يتم تسجيل أي موظف في العيادة بعد.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: Roles & Permissions Matrix -->
+    <div id="tab-content-permissions" class="tab-content hidden bg-[#0d1527] rounded-3xl border border-slate-800/80 p-8 shadow-2xl">
+        <h3 class="font-bold text-white text-base mb-6 border-b border-slate-800/40 pb-2"><i class="fa-solid fa-shield-halved text-teal-400 ml-1.5"></i> توزيع صلاحيات النظام الافتراضية</h3>
+        
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed">يعتمد نظام DentPro على صلاحيات محددة مسبقاً وتوزع تلقائياً بناءً على الدور الوظيفي للمستخدم لضمان سرية السجلات وحماية البيانات الإدارية والمالية.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Manager Card -->
+            <div class="bg-[#080d19]/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                    <h4 class="font-black text-white text-sm mb-2.5 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/15"><i class="fa-solid fa-shield-cat text-xs"></i></span>
+                        المدير الإداري والمالي (Manager)
+                    </h4>
+                    <ul class="text-xs text-slate-400 space-y-2 font-semibold">
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> إدارة إعدادات العيادة، الشعار والاسم والمعلومات.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> تسجيل وإضافة الموظفين وتعديل بياناتهم وحصصهم المالية.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> الاطلاع على لوحات التحكم والتقارير المالية المتقدمة.</li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/40 text-[10px] text-indigo-400 font-bold">صلاحية إدارية كاملة للمنشأة</div>
+            </div>
+
+            <!-- Doctor Card -->
+            <div class="bg-[#080d19]/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                    <h4 class="font-black text-white text-sm mb-2.5 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/15"><i class="fa-solid fa-stethoscope text-xs"></i></span>
+                        طبيب الأسنان المعالج (Doctor)
+                    </h4>
+                    <ul class="text-xs text-slate-400 space-y-2 font-semibold">
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> الدخول لملفات المرضى، الفحوصات والخطط العلاجية.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> تسجيل وتعديل الإجراءات العلاجية المنفذة على الأسنان.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> متابعة المواعيد الخاصة به والأرباح/النسبة الشخصية.</li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/40 text-[10px] text-teal-400 font-bold">صلاحية سريرية وطبية كاملة</div>
+            </div>
+
+            <!-- Receptionist Card -->
+            <div class="bg-[#080d19]/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                    <h4 class="font-black text-white text-sm mb-2.5 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/15"><i class="fa-solid fa-user-tie text-xs"></i></span>
+                        موظف الاستقبال (Receptionist)
+                    </h4>
+                    <ul class="text-xs text-slate-400 space-y-2 font-semibold">
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> تسجيل وتحديث البيانات الشخصية والديموغرافية للمرضى.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> جدولة، تعديل، وحذف مواعيد المرضى عبر العيادات.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> إصدار الفواتير، السندات وتحصيل المبالغ المالية.</li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/40 text-[10px] text-amber-400 font-bold">إدارة الجدولة والمقاصة والتحصيل</div>
+            </div>
+
+            <!-- Assistant Card -->
+            <div class="bg-[#080d19]/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                    <h4 class="font-black text-white text-sm mb-2.5 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/15"><i class="fa-solid fa-user-nurse text-xs"></i></span>
+                        مساعد الطبيب (Assistant)
+                    </h4>
+                    <ul class="text-xs text-slate-400 space-y-2 font-semibold">
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> الاطلاع على السجلات والمخططات السنية الخاصة بالحالة.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i> الاطلاع على المواعيد وجدول العمل اليومي للأطباء.</li>
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-ban text-red-400 mt-1"></i> يمنع من إدخال الإجراءات أو تعديل البيانات المالية الحساسة.</li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800/40 text-[10px] text-purple-400 font-bold">صلاحية مساعدة ومعاينة محدودة</div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Remove active styles from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('border-teal-400', 'text-teal-400');
+            btn.classList.add('border-transparent', 'text-slate-400');
+        });
+        
+        // Show current tab content
+        const currentContent = document.getElementById('tab-content-' + tabId);
+        if (currentContent) {
+            currentContent.classList.remove('hidden');
+        }
+        
+        // Add active styles to current button
+        const currentBtn = document.getElementById('tab-btn-' + tabId);
+        if (currentBtn) {
+            currentBtn.classList.remove('border-transparent', 'text-slate-400');
+            currentBtn.classList.add('border-teal-400', 'text-teal-400');
+        }
+
+        // Update URL hash/query param quietly
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabId);
+        window.history.pushState({}, '', url);
+    }
+
+    // On page load, check if there is a tab query parameter
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab && ['info', 'staff', 'permissions'].includes(tab)) {
+            switchTab(tab);
+        }
+    });
+</script>
 {% endblock %}
