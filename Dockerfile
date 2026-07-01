@@ -20,13 +20,13 @@ FROM base AS dev
 # أدوات التطوير (اختياري)
 RUN pip install watchdog
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 COPY . /app
+RUN chmod +x /app/entrypoint.sh
 
 # ========= Prod layer =========
 FROM base AS prod
 RUN pip install gunicorn
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 COPY . /app
+RUN chmod +x /app/entrypoint.sh
 

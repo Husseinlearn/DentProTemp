@@ -96,10 +96,13 @@ class PatientSerializer(serializers.ModelSerializer):
         return None
     # 1- التحقق من الاسم الكامل
     def validate(self, data):
+        from django.core.exceptions import ValidationError
+        from core.validators_utils import validate_full_name
         full_name = f"{data.get('first_name', '').strip()} {data.get('last_name', '').strip()}"
-        parts = full_name.split()
-        if len(parts) < 4:
-            raise serializers.ValidationError("يجب أن يحتوي الاسم الكامل على أربع كلمات على الأقل (الاسم الأول والثاني والثالث والأخير مجتمعين).")
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            raise serializers.ValidationError({"first_name": e.message})
         return data
 
     # 2- التحقق من تنسيق وتاريخ الميلاد
@@ -129,17 +132,22 @@ class PatientSerializer(serializers.ModelSerializer):
 
     # 3- التحقق من الجنس
     def validate_gender(self, value):
-        val = value.strip().lower()
-        accepted = ['male', 'female', 'other', 'ذكر', 'أنثى', 'انثى', 'غير ذلك', 'اخر', 'آخر']
-        if val not in accepted:
-            raise serializers.ValidationError(
-                "Gender must be one of: ذكر، أنثى، غير ذلك أو male, female, other."
-            )
+        from django.core.exceptions import ValidationError
+        from core.validators_utils import validate_gender
+        try:
+            validate_gender(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message)
         return value.strip()
+
     # 4- التحقق من رقم الهاتف
     def validate_phone(self, value):
-        if not re.match(r'^7\d{8}$', value):
-            raise serializers.ValidationError("رقم الهاتف يجب أن يبدأ بـ 7 ويتكون من 9 أرقام. مثل (7XXXXXXXX).")
+        from django.core.exceptions import ValidationError
+        from core.validators_utils import validate_phone_number
+        try:
+            validate_phone_number(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message)
 
         # تحقق من عدم التكرار
         if Patient.objects.filter(phone=value).exclude(id=self.instance.id if self.instance else None).exists():
@@ -149,8 +157,17 @@ class PatientSerializer(serializers.ModelSerializer):
     
     # 5- التحقق من البريد الإلكتروني
     def validate_email(self, value):
-        if value and Patient.objects.filter(email=value).exclude(id=self.instance.id if self.instance else None).exists():
-            raise serializers.ValidationError("الايميل موجود مسبقاً.")
+        if value:
+            from django.core.exceptions import ValidationError
+            from core.validators_utils import validate_email_format
+            try:
+                validate_email_format(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
+
+            # تحقق من عدم التكرار
+            if Patient.objects.filter(email=value).exclude(id=self.instance.id if self.instance else None).exists():
+                raise serializers.ValidationError("الايميل موجود مسبقاً.")
         return value
 
     # 6- التحقق من العنوان

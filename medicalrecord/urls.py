@@ -12,6 +12,7 @@ urlpatterns = [
     # المرفقات
     path('attachments/', views.AttachmentListCreateAPIView.as_view(), name='attachment-list-create'),
     path('attachments/<int:pk>/', views.AttachmentRetrieveUpdateDestroyAPIView.as_view(), name='attachment-detail'),
+    path('attachments/<int:pk>/download/', views.SecureAttachmentDownloadView.as_view(), name='attachment-secure-download'),
 
     # الأدوية التعريفية
     path('medications/', views.MedicationListCreateAPIView.as_view(), name='medication-list-create'),

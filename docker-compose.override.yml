@@ -13,6 +13,7 @@ services:
       - .:/app:cached
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - medical_attachments_volume:/app/medical_attachments
     environment:
       DJANGO_DEBUG: "1"
       DJANGO_ALLOWED_HOSTS: "*"

@@ -63,6 +63,11 @@ class Patient(models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
     
+    def delete(self, *args, **kwargs):
+        """Soft delete: archive the patient instead of hard deleting from the database."""
+        self.is_archived = True
+        self.save(update_fields=['is_archived'])
+    
 # --------------------------------------------------------------------
 # Disease Model: قاموس الأمراض المزمنة (اسم + تأثير على طب الأسنان)
 # --------------------------------------------------------------------

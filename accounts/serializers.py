@@ -14,11 +14,22 @@ class UserProfileNestedSerializer(serializers.ModelSerializer):
         fields = ['phone', 'gender', 'birth_date', 'address', 'image']
     
     def validate_gender(self, value):
-        allowed = ['ذكر', 'أنثى', 'male', 'female']
-        if value.strip().lower() not in [v.lower() for v in allowed]:
-            raise serializers.ValidationError(
-                "الجنس يجب أن يكون أحد القيم التالية فقط: 'ذكر', 'أنثى', 'male', 'female'."
-            )
+        from django.core.exceptions import ValidationError
+        from core.validators_utils import validate_gender
+        try:
+            validate_gender(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message)
+        return value.strip()
+
+    def validate_phone(self, value):
+        if value:
+            from django.core.exceptions import ValidationError
+            from core.validators_utils import validate_phone_number
+            try:
+                validate_phone_number(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
         return value.strip()
 
 
@@ -58,23 +69,33 @@ class UnifiedUserSerializer(serializers.ModelSerializer):
                     ]
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
+        from django.core.exceptions import ValidationError
+        from core.validators_utils import validate_full_name, validate_email_format
+
+        # 1. التحقق من تطابق كلمتي المرور
+        if attrs.get('password') != attrs.get('password2'):
             raise serializers.ValidationError({"password": "كلمتا المرور غير متطابقتين."})
 
+        # 2. التحقق من وجود ملف الطبيب إذا كان نوع المستخدم طبيباً
         if attrs.get('user_type') == 'doctor' and 'doctor_profile' not in self.initial_data:
             raise serializers.ValidationError({"DoctorProfile": "بيانات الطبيب مطلوبة لنوع المستخدم 'doctor'."})
+
+        # 3. التحقق من الاسم الرباعي
+        full_name = f"{attrs.get('first_name', '').strip()} {attrs.get('last_name', '').strip()}"
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            raise serializers.ValidationError({"first_name": e.message})
+
+        # 4. التحقق من صيغة البريد الإلكتروني
+        email = attrs.get('email')
+        if email:
+            try:
+                validate_email_format(email)
+            except ValidationError as e:
+                raise serializers.ValidationError({"email": e.message})
+
         return attrs
-
-    def validate(self, data):
-        # اجمع الاسم الأول والأخير بعد إزالة الفراغات من الطرفين
-        full_name = f"{data.get('first_name', '').strip()} {data.get('last_name', '').strip()}"
-        words = full_name.split()
-
-        # تحقق من أن الاسم يتكون من 4 كلمات على الأقل
-        if len(words) < 4:
-            raise serializers.ValidationError("الاسم الكامل يجب أن يتكون من أربع كلمات على الأقل (الاسم الأول + الاسم الأخير).")
-
-        return data
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         doctor_data = validated_data.pop('doctor_profile', None)

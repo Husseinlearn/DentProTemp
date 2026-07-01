@@ -15,6 +15,7 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - medical_attachments_volume:/app/medical_attachments
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)\" || exit 1"]
       interval: 30s
@@ -35,6 +36,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d # ربط ملفات الإعدادات
       - static_volume:/app/staticfiles    # قراءة الملفات الثابتة من الفوليوم المشترك
       - media_volume:/app/media          # قراءة ملفات الميديا
+      - medical_attachments_volume:/app/medical_attachments
     depends_on:
       - web
     networks:
@@ -65,6 +67,7 @@ volumes:
   db_data:
   static_volume:
   media_volume:
+  medical_attachments_volume:
 
 networks:
   dentpro_network:

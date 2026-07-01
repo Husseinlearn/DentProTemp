@@ -188,3 +188,49 @@ class PrescriptionUpsertAPIView(generics.CreateAPIView):
         ser.is_valid(raise_exception=True)
         result = ser.save()              # <-- هذا هو dict الذي أعدته create()
         return Response(result, status=status.HTTP_201_CREATED)
+
+# ================================================
+#          تحميل المرفقات الطبية بشكل آمن
+# ================================================
+import os
+from django.http import FileResponse, Http404
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from accounts.permissions_utils import is_doctor, is_manager
+
+class SecureAttachmentDownloadView(APIView):
+    """
+    تحميل الملفات الطبية المرفقة بشكل آمن للتأكد من الصلاحيات والعيادة المشتركة.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        attachment = get_object_or_404(Attachment, pk=pk)
+
+        # 1. التحقق من صلاحيات الدور (طبيب أو مدير)
+        if not (is_doctor(request.user) or is_manager(request.user)):
+            return Response(
+                {"detail": "غير مصرح لك بالوصول لهذه المرفقات الطبية. هذه الصلاحية للأطباء والإدارة فقط."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 2. التحقق من عزل البيانات للعيادات المختلفة (Multi-tenancy Isolation)
+        patient_clinic = attachment.medical_record.patient.clinic
+        if request.user.clinic and patient_clinic != request.user.clinic:
+            return Response(
+                {"detail": "غير مصرح لك بالوصول لمرفقات مريض في عيادة أخرى."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 3. جلب وقراءة الملف وإرجاعه
+        file_path = attachment.file.path
+        if not os.path.exists(file_path):
+            raise Http404("الملف المرفق غير موجود على الخادم.")
+
+        # فتح الملف وإرجاعه كـ FileResponse
+        response = FileResponse(open(file_path, 'rb'))
+        # تحديد اسم الملف في الهيدر للتحميل
+        filename = os.path.basename(file_path)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
